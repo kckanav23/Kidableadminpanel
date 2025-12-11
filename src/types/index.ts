@@ -102,6 +102,17 @@ export interface Homework {
   completionCount: number;
 }
 
+export interface HomeworkCompletion {
+  id: string;
+  homeworkId: string;
+  completionDate: Date;
+  frequencyCount?: number;
+  durationMinutes?: number;
+  status: HomeworkStatus;
+  notes?: string;
+  loggedByParent?: string;
+}
+
 export interface Strategy {
   id: string;
   title: string;
