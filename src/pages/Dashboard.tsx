@@ -1,52 +1,166 @@
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { currentUser, clients, sessions, homework, goals, auditLogs, users } from '../lib/mockData';
+import { useAuth } from '../context/AuthContext';
 import { getGreeting, formatDate } from '../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { ClientAvatar } from '../components/ClientAvatar';
-import { TherapyBadge } from '../components/TherapyBadge';
+import { ClientAvatar } from '../components/client/ClientAvatar';
+import { TherapyBadge } from '../components/badges/TherapyBadge';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
-import { Plus, ArrowRight, Calendar, Clock, CheckCircle2, TrendingUp, Activity, Users } from 'lucide-react';
+import { Plus, ArrowRight, Calendar, Clock, CheckCircle2, TrendingUp, Activity, Users, Loader2 } from 'lucide-react';
+import { getApiClient, handleApiError } from '../lib/api-client';
+import { toast } from 'sonner';
+import type { ClientSummaryResponse, SessionResponse, HomeworkResponse, GoalResponse, AuditLogResponse } from '../types/api';
 
 export function Dashboard() {
+  const { user } = useAuth();
   const today = new Date();
   const formattedDate = formatDate(today);
   
-  const myClients = currentUser.role === 'therapist'
-    ? clients.filter(c => c.primaryTherapistId === currentUser.id)
+  // State for all data
+  const [clients, setClients] = useState<ClientSummaryResponse[]>([]);
+  const [sessions, setSessions] = useState<SessionResponse[]>([]);
+  const [homework, setHomework] = useState<HomeworkResponse[]>([]);
+  const [goals, setGoals] = useState<GoalResponse[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch all dashboard data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      try {
+        const api = getApiClient();
+        
+        // Fetch clients first
+        const clientsData = await api.adminClients.listClients({ 
+          size: 100, 
+          mine: user?.role === 'THERAPIST' 
+        });
+        const clientsList = clientsData.items || [];
+        setClients(clientsList);
+
+        // Fetch audit logs (admin only)
+        if (user?.admin) {
+          try {
+            const auditLogsData = await api.adminAuditLog.list7({ size: 5 });
+            setAuditLogs(auditLogsData.items || []);
+          } catch (error) {
+            console.error('Error fetching audit logs:', error);
+          }
+        }
+
+        // Fetch sessions, homework, and goals for clients (limited to first 10 for performance)
+        if (clientsList.length > 0) {
+          const clientIds = clientsList.slice(0, 10).map(c => c.id).filter(Boolean) as string[];
+          
+          const [allSessions, allHomework, allGoals] = await Promise.all([
+            // Fetch sessions for each client
+            Promise.all(
+              clientIds.map(clientId =>
+                api.adminSessions.getSessions({ clientId, limit: 5 }).catch(() => [])
+              )
+            ).then(results => results.flat()),
+            
+            // Fetch homework for each client
+            Promise.all(
+              clientIds.map(clientId =>
+                api.adminHomework.getHomework({ clientId, active: true }).catch(() => [])
+              )
+            ).then(results => results.flat()),
+            
+            // Fetch goals for each client
+            Promise.all(
+              clientIds.map(clientId =>
+                api.adminGoals.getGoals({ clientId, status: 'active' }).catch(() => [])
+              )
+            ).then(results => results.flat()),
+          ]);
+
+          setSessions(allSessions);
+          setHomework(allHomework);
+          setGoals(allGoals);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [user?.role]);
+
+  // Filter clients based on user role
+  const myClients = user?.role === 'THERAPIST'
+    ? clients // API already filters with mine=true
     : clients;
 
+  // Filter today's sessions
   const todaySessions = sessions.filter(s => {
-    const sessionDate = new Date(s.date);
+    if (!s.sessionDate) return false;
+    const sessionDate = new Date(s.sessionDate);
     return sessionDate.toDateString() === today.toDateString();
   });
 
-  const pendingHomework = homework.filter(h => h.status === 'yet-to-try' || h.status === 'not-started');
-  const completedHomework = homework.filter(h => h.status === 'worked');
+  // Filter homework
+  const pendingHomework = homework.filter(h => {
+    const status = h.status?.toLowerCase();
+    return status === 'yet_to_try' || status === 'not_started';
+  });
+  const completedHomework = homework.filter(h => h.status?.toLowerCase() === 'worked');
 
   // Recent sessions (last 5)
   const recentSessions = sessions
-    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .filter(s => s.sessionDate)
+    .sort((a, b) => new Date(b.sessionDate!).getTime() - new Date(a.sessionDate!).getTime())
     .slice(0, 5);
 
-  // Goals progress
+  // Goals progress - calculate from latest progress entry
   const activeGoals = goals.filter(g => g.status === 'active');
   const avgProgress = activeGoals.length > 0
-    ? Math.round(activeGoals.reduce((sum, g) => sum + g.current, 0) / activeGoals.length)
+    ? Math.round(activeGoals.reduce((sum, g) => {
+        // Calculate current value from latest progress entry
+        const latestProgress = g.goalProgress && g.goalProgress.length > 0
+          ? g.goalProgress[g.goalProgress.length - 1]
+          : null;
+        const current = latestProgress?.value ?? parseFloat(g.baselineValue || '0');
+        const baseline = parseFloat(g.baselineValue || '0');
+        const target = parseFloat(g.targetValue || '1');
+        
+        // Calculate percentage progress
+        if (target === baseline) return 0;
+        const progress = ((current - baseline) / (target - baseline)) * 100;
+        return sum + Math.max(0, Math.min(100, progress));
+      }, 0) / activeGoals.length)
     : 0;
 
   // Recent activity
   const recentActivity = auditLogs
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    .filter(log => log.createdAt)
+    .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
     .slice(0, 5);
 
-  // Get upcoming sessions (mock data for today and next few days)
-  const upcomingSessions = [
-    { id: '1', clientName: 'Alex Johnson', therapyType: 'aba', time: '10:00 AM', clientId: 'c1' },
-    { id: '2', clientName: 'Emma Wilson', therapyType: 'speech', time: '11:30 AM', clientId: 'c2' },
-    { id: '3', clientName: 'Alex Johnson', therapyType: 'speech', time: '2:00 PM', clientId: 'c1' },
-  ];
+  // Get upcoming sessions (today's sessions)
+  const upcomingSessions = todaySessions.slice(0, 3).map(session => {
+    const client = clients.find(c => c.id === session.clientId);
+    const sessionDate = session.sessionDate ? new Date(session.sessionDate) : today;
+    const hours = sessionDate.getHours();
+    const minutes = sessionDate.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    const time = `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    
+    return {
+      id: session.id || '',
+      clientName: client ? `${client.firstName} ${client.lastName}` : 'Unknown',
+      therapyType: (session.therapy?.toLowerCase() || 'aba') as 'aba' | 'speech' | 'ot',
+      time,
+      clientId: session.clientId || '',
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -54,7 +168,7 @@ export function Dashboard() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl mb-1">
-            {getGreeting()}, {currentUser.name.split(' ')[0]} 👋
+            {getGreeting()}, {user?.fullName?.split(' ')[0] || 'User'} 👋
           </h1>
           <p className="text-slate-600">{formattedDate}</p>
         </div>
@@ -80,7 +194,7 @@ export function Dashboard() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm text-slate-600">
-                {currentUser.role === 'therapist' ? 'My Clients' : 'Total Clients'}
+                {user?.role === 'THERAPIST' ? 'My Clients' : 'Total Clients'}
               </CardTitle>
               <Users className="size-4 text-[#0B5B45]" />
             </div>
@@ -181,7 +295,7 @@ export function Dashboard() {
               <Activity className="size-5 text-[#0B5B45]" />
               RECENT ACTIVITY
             </CardTitle>
-            {currentUser.role === 'admin' && (
+            {user?.admin && (
               <Link to="/audit-logs">
                 <Button variant="ghost" size="sm" className="gap-1">
                   View All <ArrowRight className="size-4" />
@@ -191,26 +305,34 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentActivity.map((activity, idx) => {
-                const timeAgo = Math.floor((today.getTime() - activity.timestamp.getTime()) / (1000 * 60 * 60));
-                const timeDisplay = timeAgo < 1 ? 'Just now' : timeAgo < 24 ? `${timeAgo}h ago` : `${Math.floor(timeAgo / 24)}d ago`;
-                
-                return (
-                  <div key={activity.id} className={`flex items-start gap-3 pb-3 ${idx < recentActivity.length - 1 ? 'border-b' : ''}`}>
-                    <div className="flex-1">
-                      <p className="text-sm">
-                        <span className="font-medium">{activity.userName}</span>
-                        {' '}
-                        <span className="text-slate-600">{activity.details.toLowerCase()}</span>
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1">{timeDisplay}</p>
+              {recentActivity.length > 0 ? (
+                recentActivity.map((activity, idx) => {
+                  const createdAt = activity.createdAt ? new Date(activity.createdAt) : today;
+                  const timeAgo = Math.floor((today.getTime() - createdAt.getTime()) / (1000 * 60 * 60));
+                  const timeDisplay = timeAgo < 1 ? 'Just now' : timeAgo < 24 ? `${timeAgo}h ago` : `${Math.floor(timeAgo / 24)}d ago`;
+                  
+                  return (
+                    <div key={activity.id} className={`flex items-start gap-3 pb-3 ${idx < recentActivity.length - 1 ? 'border-b' : ''}`}>
+                      <div className="flex-1">
+                        <p className="text-sm">
+                          <span className="font-medium">{activity.performedBy || 'System'}</span>
+                          {' '}
+                          <span className="text-slate-600">{activity.action || 'performed an action'}</span>
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">{timeDisplay}</p>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {activity.resourceType || 'Unknown'}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="text-xs">
-                      {activity.action}
-                    </Badge>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="text-center py-8 text-slate-500">
+                  <Activity className="size-12 mx-auto mb-2 text-slate-300" />
+                  <p>No recent activity</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -220,7 +342,7 @@ export function Dashboard() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle>
-            {currentUser.role === 'therapist' ? 'MY CLIENTS' : 'ALL CLIENTS'}
+            {user?.role === 'THERAPIST' ? 'MY CLIENTS' : 'ALL CLIENTS'}
           </CardTitle>
           <Link to="/clients">
             <Button variant="ghost" size="sm" className="gap-1">
@@ -233,12 +355,27 @@ export function Dashboard() {
             {myClients.slice(0, 5).map(client => {
               const clientGoals = goals.filter(g => g.clientId === client.id && g.status === 'active');
               const avgClientProgress = clientGoals.length > 0
-                ? Math.round(clientGoals.reduce((sum, g) => sum + g.current, 0) / clientGoals.length)
+                ? Math.round(clientGoals.reduce((sum, g) => {
+                    // Calculate current value from latest progress entry
+                    const latestProgress = g.goalProgress && g.goalProgress.length > 0
+                      ? g.goalProgress[g.goalProgress.length - 1]
+                      : null;
+                    const current = latestProgress?.value ?? parseFloat(g.baselineValue || '0');
+                    const baseline = parseFloat(g.baselineValue || '0');
+                    const target = parseFloat(g.targetValue || '1');
+                    
+                    // Calculate percentage progress
+                    if (target === baseline) return sum;
+                    const progress = ((current - baseline) / (target - baseline)) * 100;
+                    return sum + Math.max(0, Math.min(100, progress));
+                  }, 0) / clientGoals.length)
                 : 0;
-              const clientSessions = sessions.filter(s => s.clientId === client.id);
-              const lastSession = clientSessions.sort((a, b) => b.date.getTime() - a.date.getTime())[0];
-              const daysSinceSession = lastSession
-                ? Math.floor((today.getTime() - lastSession.date.getTime()) / (1000 * 60 * 60 * 24))
+              const clientSessions = sessions.filter(s => s.clientId === client.id && s.sessionDate);
+              const lastSession = clientSessions.sort((a, b) => 
+                new Date(b.sessionDate!).getTime() - new Date(a.sessionDate!).getTime()
+              )[0];
+              const daysSinceSession = lastSession && lastSession.sessionDate
+                ? Math.floor((today.getTime() - new Date(lastSession.sessionDate).getTime()) / (1000 * 60 * 60 * 24))
                 : null;
 
               return (
@@ -256,9 +393,9 @@ export function Dashboard() {
                           <p className="text-sm text-slate-600">{client.age} years old</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          {client.therapyTypes.map(type => (
-                            <TherapyBadge key={type} type={type} showLabel={false} />
-                          ))}
+                          {client.therapies?.map(type => (
+                            <TherapyBadge key={type} type={(type.toLowerCase() as 'aba' | 'speech' | 'ot')} showLabel={false} />
+                          )) || null}
                         </div>
                       </div>
                       
@@ -300,38 +437,48 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentSessions.map((session, idx) => {
-                const client = clients.find(c => c.id === session.clientId);
-                const daysAgo = Math.floor((today.getTime() - session.date.getTime()) / (1000 * 60 * 60 * 24));
-                const timeDisplay = daysAgo === 0 ? 'Today' : `${daysAgo}d ago`;
+              {recentSessions.length > 0 ? (
+                recentSessions.map((session, idx) => {
+                  const client = clients.find(c => c.id === session.clientId);
+                  const sessionDate = session.sessionDate ? new Date(session.sessionDate) : today;
+                  const daysAgo = Math.floor((today.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24));
+                  const timeDisplay = daysAgo === 0 ? 'Today' : `${daysAgo}d ago`;
 
-                return (
-                  <Link
-                    key={session.id}
-                    to={`/clients/${session.clientId}`}
-                    className={`flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors ${idx < recentSessions.length - 1 ? 'border-b' : ''}`}
-                  >
-                    <ClientAvatar
-                      name={client ? `${client.firstName} ${client.lastName}` : 'Unknown'}
-                      photoUrl={client?.photoUrl}
-                      size="sm"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">
-                        {client ? `${client.firstName} ${client.lastName}` : 'Unknown Client'}
-                      </p>
-                      <p className="text-xs text-slate-600">Session #{session.sessionNumber}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <TherapyBadge type={session.therapyType} showLabel={false} />
-                      <Badge variant="outline" className="text-xs border-green-200 text-green-700 bg-green-50">
-                        {session.zone}
-                      </Badge>
-                    </div>
-                    <span className="text-xs text-slate-500">{timeDisplay}</span>
-                  </Link>
-                );
-              })}
+                  return (
+                    <Link
+                      key={session.id}
+                      to={`/clients/${session.clientId}`}
+                      className={`flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors ${idx < recentSessions.length - 1 ? 'border-b' : ''}`}
+                    >
+                      <ClientAvatar
+                        name={client ? `${client.firstName} ${client.lastName}` : 'Unknown'}
+                        photoUrl={client?.photoUrl}
+                        size="sm"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm">
+                          {client ? `${client.firstName} ${client.lastName}` : 'Unknown Client'}
+                        </p>
+                        <p className="text-xs text-slate-600">Session #{session.sessionNumber}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <TherapyBadge type={(session.therapy?.toLowerCase() || 'aba') as 'aba' | 'speech' | 'ot'} showLabel={false} />
+                        {session.zone && (
+                          <Badge variant="outline" className="text-xs border-green-200 text-green-700 bg-green-50">
+                            {session.zone}
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-xs text-slate-500">{timeDisplay}</span>
+                    </Link>
+                  );
+                })
+              ) : (
+                <div className="text-center py-8 text-slate-500">
+                  <Calendar className="size-12 mx-auto mb-2 text-slate-300" />
+                  <p>No recent sessions</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -343,15 +490,17 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {homework.slice(0, 5).map((hw, idx) => {
-                const client = clients.find(c => c.id === hw.clientId);
-                const statusColors = {
-                  'worked': 'bg-green-50 text-green-700 border-green-200',
-                  'worked-with-help': 'bg-blue-50 text-blue-700 border-blue-200',
-                  'yet-to-try': 'bg-yellow-50 text-yellow-700 border-yellow-200',
-                  'not-started': 'bg-slate-50 text-slate-700 border-slate-200',
-                  'too-hard': 'bg-red-50 text-red-700 border-red-200',
-                };
+              {homework.length > 0 ? (
+                homework.slice(0, 5).map((hw, idx) => {
+                  const client = clients.find(c => c.id === hw.clientId);
+                  const hwStatus = hw.status?.toLowerCase() || 'not-started';
+                  const statusColors: Record<string, string> = {
+                    'worked': 'bg-green-50 text-green-700 border-green-200',
+                    'not_worked': 'bg-red-50 text-red-700 border-red-200',
+                    'yet_to_try': 'bg-yellow-50 text-yellow-700 border-yellow-200',
+                    'not_started': 'bg-slate-50 text-slate-700 border-slate-200',
+                  };
+                  const statusLabel = hwStatus.replace('_', ' ');
 
                 return (
                   <div key={hw.id} className={`pb-4 ${idx < homework.slice(0, 5).length - 1 ? 'border-b' : ''}`}>
@@ -367,13 +516,13 @@ export function Dashboard() {
                           {client ? `${client.firstName} ${client.lastName}` : 'Unknown Client'}
                         </p>
                         <div className="flex items-center gap-2">
-                          <TherapyBadge type={hw.therapyType} showLabel={false} />
-                          <Badge variant="outline" className={`text-xs ${statusColors[hw.status]}`}>
-                            {hw.status.replace('-', ' ')}
+                          <TherapyBadge type={(hw.therapy?.toLowerCase() || 'aba') as 'aba' | 'speech' | 'ot'} showLabel={false} />
+                          <Badge variant="outline" className={`text-xs ${statusColors[hwStatus] || statusColors['not_started']}`}>
+                            {statusLabel}
                           </Badge>
-                          {hw.completionCount && (
+                          {hw.homeworkCompletions && hw.homeworkCompletions.length > 0 && (
                             <span className="text-xs text-slate-500">
-                              Completed {hw.completionCount}x
+                              Completed {hw.homeworkCompletions.length}x
                             </span>
                           )}
                         </div>
@@ -381,7 +530,13 @@ export function Dashboard() {
                     </div>
                   </div>
                 );
-              })}
+              })
+            ) : (
+              <div className="text-center py-8 text-slate-500">
+                <CheckCircle2 className="size-12 mx-auto mb-2 text-slate-300" />
+                <p>No homework activity</p>
+              </div>
+            )}
             </div>
           </CardContent>
         </Card>

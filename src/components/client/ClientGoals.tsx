@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Goal } from '../../types';
+import type { GoalResponse, GoalCreateRequest, GoalUpdateRequest } from '../../types/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
-import { TherapyBadge } from '../TherapyBadge';
-import { Plus, TrendingUp, Edit, Trash2 } from 'lucide-react';
+import { TherapyBadge } from '../badges/TherapyBadge';
+import { Plus, TrendingUp, Edit, Trash2, Loader2 } from 'lucide-react';
 import { formatDate } from '../../lib/utils';
 import {
   Select,
@@ -20,16 +21,59 @@ import {
   DeleteConfirmDialog,
   GoalFormData,
 } from '../forms';
-import { GoalProgressView } from '../goals/GoalProgressView';
-import { LogProgressForm, ProgressLogData } from '../goals/LogProgressForm';
+import { GoalProgressView } from './goals/GoalProgressView';
+import { LogProgressForm, ProgressLogData } from './goals/LogProgressForm';
+import { getApiClient, handleApiError } from '../../lib/api-client';
 import { toast } from 'sonner';
 
 interface ClientGoalsProps {
   clientId: string;
-  goals: Goal[];
+  goals?: Goal[]; // Optional for backward compatibility, but we'll fetch from API
 }
 
-export function ClientGoals({ clientId, goals }: ClientGoalsProps) {
+// Helper function to map API GoalResponse to component Goal interface
+function mapGoalResponseToGoal(apiGoal: GoalResponse): Goal {
+  // Calculate current value from latest progress entry
+  const latestProgress = apiGoal.goalProgress && apiGoal.goalProgress.length > 0
+    ? apiGoal.goalProgress[apiGoal.goalProgress.length - 1]
+    : null;
+  const current = latestProgress?.value ?? parseFloat(apiGoal.baselineValue || '0');
+
+  // Convert therapy enum to TherapyType
+  const therapyTypeMap: Record<string, 'aba' | 'speech' | 'ot'> = {
+    'ABA': 'aba',
+    'Speech': 'speech',
+    'OT': 'ot',
+  };
+  const therapyType = therapyTypeMap[apiGoal.therapy] || 'aba';
+
+  // Convert status enum to GoalStatus
+  const statusMap: Record<string, 'active' | 'achieved' | 'on-hold' | 'discontinued'> = {
+    'active': 'active',
+    'achieved': 'achieved',
+    'on_hold': 'on-hold',
+    'discontinued': 'discontinued',
+  };
+  const status = statusMap[apiGoal.status] || 'active';
+
+  return {
+    id: apiGoal.id || '',
+    clientId: apiGoal.clientId || '',
+    title: apiGoal.title,
+    description: apiGoal.description || '',
+    therapyType,
+    baseline: parseFloat(apiGoal.baselineValue || '0'),
+    target: parseFloat(apiGoal.targetValue || '100'),
+    current,
+    status,
+    dueDate: apiGoal.targetDate ? new Date(apiGoal.targetDate) : undefined,
+    createdDate: apiGoal.createdAt ? new Date(apiGoal.createdAt) : new Date(),
+  };
+}
+
+export function ClientGoals({ clientId, goals: initialGoals }: ClientGoalsProps) {
+  const [goals, setGoals] = useState<Goal[]>(initialGoals || []);
+  const [loading, setLoading] = useState(!initialGoals);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [goalFormOpen, setGoalFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -39,16 +83,71 @@ export function ClientGoals({ clientId, goals }: ClientGoalsProps) {
   const [progressViewOpen, setProgressViewOpen] = useState(false);
   const [logProgressOpen, setLogProgressOpen] = useState(false);
 
+  // Fetch goals from API
+  useEffect(() => {
+    const fetchGoals = async () => {
+      setLoading(true);
+      try {
+        const api = getApiClient();
+        const response = await api.adminGoals.getGoals({
+          clientId,
+          status: statusFilter !== 'all' ? statusFilter : undefined,
+        });
+        const mappedGoals = response.map(mapGoalResponseToGoal);
+        setGoals(mappedGoals);
+      } catch (error) {
+        console.error('Error fetching goals:', error);
+        toast.error('Failed to load goals');
+        setGoals([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGoals();
+  }, [clientId, statusFilter]);
+
   let filteredGoals = goals;
   if (statusFilter !== 'all') {
     filteredGoals = goals.filter(g => g.status === statusFilter);
   }
 
-  const handleCreateGoal = (data: GoalFormData) => {
-    console.log('Creating goal:', data);
-    // TODO: Implement API call
-    setGoalFormOpen(false);
-    setEditingGoal(null);
+  const handleCreateGoal = async (data: GoalFormData) => {
+    try {
+      const api = getApiClient();
+      const request: GoalCreateRequest = {
+        title: data.title,
+        description: data.description,
+        therapy: data.therapy as GoalCreateRequest.therapy,
+        category: data.category,
+        targetCriteria: data.targetCriteria,
+        baselineValue: data.baselineValue ? parseFloat(data.baselineValue) : undefined,
+        targetValue: data.targetValue ? parseFloat(data.targetValue) : undefined,
+        status: data.status as GoalCreateRequest.status,
+        startDate: data.startDate,
+        targetDate: data.targetDate,
+        masteryCriteria: data.masteryCriteria,
+      };
+
+      const response = await api.adminGoals.createGoal({
+        clientId,
+        requestBody: request,
+      });
+
+      // Refresh goals list
+      const updatedGoals = await api.adminGoals.getGoals({
+        clientId,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+      });
+      setGoals(updatedGoals.map(mapGoalResponseToGoal));
+
+      toast.success('Goal created successfully');
+      setGoalFormOpen(false);
+      setEditingGoal(null);
+    } catch (error) {
+      console.error('Error creating goal:', error);
+      toast.error('Failed to create goal');
+    }
   };
 
   const handleEditGoal = (goal: Goal) => {
@@ -56,17 +155,75 @@ export function ClientGoals({ clientId, goals }: ClientGoalsProps) {
     setGoalFormOpen(true);
   };
 
+  const handleUpdateGoal = async (data: GoalFormData) => {
+    if (!editingGoal) return;
+
+    try {
+      const api = getApiClient();
+      const request: GoalUpdateRequest = {
+        title: data.title,
+        description: data.description,
+        therapy: data.therapy as GoalUpdateRequest.therapy,
+        targetCriteria: data.targetCriteria,
+        baselineValue: data.baselineValue ? parseFloat(data.baselineValue) : undefined,
+        targetValue: data.targetValue ? parseFloat(data.targetValue) : undefined,
+        status: data.status as GoalUpdateRequest.status,
+        startDate: data.startDate,
+        targetDate: data.targetDate,
+        achievedDate: data.achievedDate,
+      };
+
+      await api.adminGoals.updateGoal({
+        clientId,
+        goalId: editingGoal.id,
+        requestBody: request,
+      });
+
+      // Refresh goals list
+      const updatedGoals = await api.adminGoals.getGoals({
+        clientId,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+      });
+      setGoals(updatedGoals.map(mapGoalResponseToGoal));
+
+      toast.success('Goal updated successfully');
+      setGoalFormOpen(false);
+      setEditingGoal(null);
+    } catch (error) {
+      console.error('Error updating goal:', error);
+      toast.error('Failed to update goal');
+    }
+  };
+
   const handleDeleteGoal = (goal: Goal) => {
     setSelectedGoal(goal);
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
-    console.log('Deleting goal:', selectedGoal?.id);
-    // TODO: Implement API call
-    toast.success('Goal deleted successfully');
-    setDeleteDialogOpen(false);
-    setSelectedGoal(null);
+  const confirmDelete = async () => {
+    if (!selectedGoal) return;
+
+    try {
+      const api = getApiClient();
+      await api.adminGoals.deleteGoal({
+        clientId,
+        goalId: selectedGoal.id,
+      });
+
+      // Refresh goals list
+      const updatedGoals = await api.adminGoals.getGoals({
+        clientId,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+      });
+      setGoals(updatedGoals.map(mapGoalResponseToGoal));
+
+      toast.success('Goal deleted successfully');
+      setDeleteDialogOpen(false);
+      setSelectedGoal(null);
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+      toast.error('Failed to delete goal');
+    }
   };
 
   const handleViewProgress = (goal: Goal) => {
@@ -79,11 +236,34 @@ export function ClientGoals({ clientId, goals }: ClientGoalsProps) {
     setLogProgressOpen(true);
   };
 
-  const handleProgressSubmit = (data: ProgressLogData) => {
-    console.log('Logging progress:', data);
-    // TODO: Implement API call to save progress entry
-    setLogProgressOpen(false);
-    setViewingGoal(null);
+  const handleProgressSubmit = async (data: ProgressLogData) => {
+    if (!viewingGoal) return;
+
+    try {
+      const api = getApiClient();
+      await api.adminGoalProgress.addProgress({
+        goalId: viewingGoal.id,
+        requestBody: {
+          value: data.value,
+          recordedDate: data.date ? new Date(data.date).toISOString().split('T')[0] : undefined,
+          notes: data.notes,
+        },
+      });
+
+      // Refresh goals list to get updated progress
+      const updatedGoals = await api.adminGoals.getGoals({
+        clientId,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+      });
+      setGoals(updatedGoals.map(mapGoalResponseToGoal));
+
+      toast.success('Progress logged successfully');
+      setLogProgressOpen(false);
+      setViewingGoal(null);
+    } catch (error) {
+      console.error('Error logging progress:', error);
+      toast.error('Failed to log progress');
+    }
   };
 
   return (
@@ -117,7 +297,14 @@ export function ClientGoals({ clientId, goals }: ClientGoalsProps) {
       </div>
 
       {/* Goals List */}
-      {filteredGoals.length === 0 ? (
+      {loading ? (
+        <Card>
+          <CardContent className="text-center py-12">
+            <Loader2 className="size-6 animate-spin text-[#0B5B45] mx-auto" />
+            <p className="text-slate-600 mt-2">Loading goals...</p>
+          </CardContent>
+        </Card>
+      ) : filteredGoals.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
             <p className="text-slate-600 mb-4">No goals found</p>
@@ -245,7 +432,7 @@ export function ClientGoals({ clientId, goals }: ClientGoalsProps) {
       >
         <GoalForm
           clientId={clientId}
-          onSubmit={handleCreateGoal}
+          onSubmit={editingGoal ? handleUpdateGoal : handleCreateGoal}
           onCancel={() => {
             setGoalFormOpen(false);
             setEditingGoal(null);
@@ -254,10 +441,10 @@ export function ClientGoals({ clientId, goals }: ClientGoalsProps) {
             clientId: editingGoal.clientId,
             title: editingGoal.title,
             description: editingGoal.description,
-            therapy: editingGoal.therapyType as 'ABA' | 'Speech' | 'OT',
+            therapy: editingGoal.therapyType === 'aba' ? 'ABA' : editingGoal.therapyType === 'speech' ? 'Speech' : 'OT',
             baselineValue: editingGoal.baseline.toString(),
             targetValue: editingGoal.target.toString(),
-            status: editingGoal.status as any,
+            status: editingGoal.status === 'on-hold' ? 'on_hold' : editingGoal.status,
             startDate: editingGoal.createdDate.toISOString().split('T')[0],
             targetDate: editingGoal.dueDate?.toISOString().split('T')[0],
           } : undefined}

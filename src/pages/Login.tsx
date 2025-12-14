@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { useAuth } from '../context/AuthContext';
 import { LogIn, Loader2 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
-import HeroSectionYellow from '../imports/HeroSectionYellow';
-import HeroSectionPurple from '../imports/HeroSectionPurple';
+import HeroSectionYellow from '../components/graphics/HeroSectionYellow';
+import HeroSectionPurple from '../components/graphics/HeroSectionPurple';
 
 export function Login() {
   const [accessCode, setAccessCode] = useState('');

@@ -1,16 +1,20 @@
+import React, { useState, useEffect } from 'react';
 import { JournalEntry } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { ZoneBadge } from '../ZoneBadge';
+import { ZoneBadge } from '../badges/ZoneBadge';
 import { formatDateTime } from '../../lib/utils';
 import { ZONE_COLORS } from '../../lib/constants';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useState } from 'react';
 import { Button } from '../ui/button';
+import { Loader2 } from 'lucide-react';
+import { getApiClient } from '../../lib/api-client';
+import type { MoodEntryResponse, JournalEntryResponse } from '../../types/api';
+import { toast } from 'sonner';
 
 interface ClientMoodJournalProps {
   clientId: string;
-  entries: JournalEntry[];
+  entries?: JournalEntry[]; // Optional for backward compatibility
 }
 
 const zoneToValue = {
@@ -21,19 +25,79 @@ const zoneToValue = {
   blue: 1,
 };
 
-export function ClientMoodJournal({ clientId, entries }: ClientMoodJournalProps) {
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('7d');
+// Helper to convert JournalEntryResponse to JournalEntry
+function mapJournalEntryResponse(apiEntry: JournalEntryResponse): JournalEntry {
+  return {
+    id: apiEntry.id || '',
+    clientId: apiEntry.clientId || '',
+    date: apiEntry.entryDate ? new Date(apiEntry.entryDate) : new Date(),
+    zone: (apiEntry.zone?.toLowerCase() as 'green' | 'yellow' | 'orange' | 'red' | 'blue') || 'green',
+    energyGivers: apiEntry.energyGivers ? apiEntry.energyGivers.split(',').map(s => s.trim()) : [],
+    energyDrainers: apiEntry.energyDrainers ? apiEntry.energyDrainers.split(',').map(s => s.trim()) : [],
+    relaxingActivity: apiEntry.relaxingActivity,
+    notes: apiEntry.additionalNotes,
+    tags: apiEntry.tags || [],
+    loggedBy: apiEntry.parent?.fullName || 'Parent',
+  };
+}
 
-  const sortedEntries = [...entries].sort((a, b) => 
+// Helper to convert MoodEntryResponse to chart data
+function mapMoodEntryToChartData(apiEntry: MoodEntryResponse) {
+  const date = apiEntry.entryDate ? new Date(apiEntry.entryDate) : new Date();
+  const zone = (apiEntry.zone?.toLowerCase() as 'green' | 'yellow' | 'orange' | 'red' | 'blue') || 'green';
+  return {
+    date: date, // Keep original date for sorting
+    dateLabel: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), // Formatted string for display
+    value: zoneToValue[zone] || 2, // Default to green if zone not found
+    zone,
+  };
+}
+
+export function ClientMoodJournal({ clientId, entries: initialEntries }: ClientMoodJournalProps) {
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('7d');
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(initialEntries || []);
+  const [moodEntries, setMoodEntries] = useState<MoodEntryResponse[]>([]);
+  const [loading, setLoading] = useState(!initialEntries);
+
+  // Fetch mood and journal entries from API
+  useEffect(() => {
+    const fetchEntries = async () => {
+      setLoading(true);
+      try {
+        const api = getApiClient();
+        const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
+        
+        const [moodData, journalData] = await Promise.all([
+          api.adminClientMood.getMoodEntries1({ clientId, days }),
+          api.adminClientJournal.getJournalEntries({ clientId, limit: 100 }),
+        ]);
+
+        setMoodEntries(moodData);
+        const mappedJournal = journalData.map(mapJournalEntryResponse);
+        setJournalEntries(mappedJournal);
+      } catch (error) {
+        console.error('Error fetching entries:', error);
+        toast.error('Failed to load mood & journal entries');
+        setJournalEntries([]);
+        setMoodEntries([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!initialEntries) {
+      fetchEntries();
+    }
+  }, [clientId, timeRange, initialEntries]);
+
+  // Combine mood entries for chart
+  const chartData = moodEntries
+    .map(mapMoodEntryToChartData)
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  const sortedEntries = [...journalEntries].sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
-
-  // Prepare chart data
-  const chartData = sortedEntries.map(entry => ({
-    date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    value: zoneToValue[entry.zone],
-    zone: entry.zone,
-  })).reverse();
 
   return (
     <div className="space-y-6">
@@ -69,56 +133,77 @@ export function ClientMoodJournal({ clientId, entries }: ClientMoodJournalProps)
           </div>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis 
-                domain={[0, 6]} 
-                ticks={[1, 2, 3, 4, 5]}
-                tickFormatter={(value) => {
-                  const labels: Record<number, string> = {
-                    1: 'Blue',
-                    2: 'Green',
-                    3: 'Yellow',
-                    4: 'Orange',
-                    5: 'Red',
-                  };
-                  return labels[value] || '';
-                }}
-              />
-              <Tooltip 
-                content={({ active, payload }) => {
-                  if (active && payload && payload[0]) {
-                    const data = payload[0].payload;
-                    return (
-                      <div className="bg-white border rounded-lg p-3 shadow-lg">
-                        <p className="text-sm font-medium">{data.date}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <ZoneBadge zone={data.zone} />
+          {loading ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <Loader2 className="size-6 animate-spin text-[#0B5B45]" />
+              <p className="text-slate-600 ml-2">Loading mood data...</p>
+            </div>
+          ) : chartData.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-slate-600">No mood entries available for this time period</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="dateLabel"
+                  tickFormatter={(value) => value}
+                />
+                <YAxis 
+                  domain={[0, 6]} 
+                  ticks={[1, 2, 3, 4, 5]}
+                  tickFormatter={(value) => {
+                    const labels: Record<number, string> = {
+                      1: 'Blue',
+                      2: 'Green',
+                      3: 'Yellow',
+                      4: 'Orange',
+                      5: 'Red',
+                    };
+                    return labels[value] || '';
+                  }}
+                />
+                <Tooltip 
+                  content={({ active, payload }) => {
+                    if (active && payload && payload[0]) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white border rounded-lg p-3 shadow-lg">
+                          <p className="text-sm font-medium">{data.dateLabel}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <ZoneBadge zone={data.zone} />
+                          </div>
                         </div>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="value" 
-                stroke="#0D9488" 
-                strokeWidth={2}
-                dot={{ fill: '#0D9488', r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke="#0D9488" 
+                  strokeWidth={2}
+                  dot={{ fill: '#0D9488', r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
 
       {/* Journal Entries */}
       <div>
-        <h2 className="text-xl mb-4">Journal Entries ({entries.length})</h2>
-        {sortedEntries.length === 0 ? (
+        <h2 className="text-xl mb-4">Journal Entries ({journalEntries.length})</h2>
+        {loading ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Loader2 className="size-6 animate-spin text-[#0B5B45] mx-auto" />
+              <p className="text-slate-600 mt-2">Loading entries...</p>
+            </CardContent>
+          </Card>
+        ) : sortedEntries.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <p className="text-slate-600">No journal entries yet</p>

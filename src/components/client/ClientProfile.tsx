@@ -1,4 +1,4 @@
-import { Client } from '../../types';
+import type { ClientProfile as ClientProfileType } from '../../types/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -6,7 +6,7 @@ import { Edit } from 'lucide-react';
 import { formatDate } from '../../lib/utils';
 
 interface ClientProfileProps {
-  client: Client;
+  client: ClientProfileType;
 }
 
 export function ClientProfile({ client }: ClientProfileProps) {
@@ -28,27 +28,27 @@ export function ClientProfile({ client }: ClientProfileProps) {
           </div>
           <div>
             <p className="text-sm text-slate-600">Date of Birth</p>
-            <p className="font-medium">{formatDate(client.dateOfBirth)}</p>
+            <p className="font-medium">
+              {client.dateOfBirth ? formatDate(new Date(client.dateOfBirth)) : 'N/A'}
+            </p>
           </div>
-          <div>
-            <p className="text-sm text-slate-600">Age</p>
-            <p className="font-medium">{client.age} years old</p>
-          </div>
-          <div>
-            <p className="text-sm text-slate-600">Therapy Start Date</p>
-            <p className="font-medium">{formatDate(client.therapyStartDate)}</p>
-          </div>
-          <div>
-            <p className="text-sm text-slate-600">Status</p>
-            <Badge variant="outline" className="text-green-700 border-green-700">
-              {client.status}
-            </Badge>
-          </div>
+          {client.age !== undefined && (
+            <div>
+              <p className="text-sm text-slate-600">Age</p>
+              <p className="font-medium">{client.age} years old</p>
+            </div>
+          )}
+          {client.pronouns && (
+            <div>
+              <p className="text-sm text-slate-600">Pronouns</p>
+              <p className="font-medium">{client.pronouns}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Sensory Profile */}
-      {client.sensoryProfile && (
+      {client.sensoryProfile && Object.keys(client.sensoryProfile).length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Sensory Profile</CardTitle>
@@ -58,51 +58,24 @@ export function ClientProfile({ client }: ClientProfileProps) {
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {client.sensoryProfile.visual && (
-              <div className="flex gap-3">
-                <span className="text-xl">👁️</span>
-                <div className="flex-1">
-                  <p className="text-sm text-slate-600">Visual</p>
-                  <p>{client.sensoryProfile.visual}</p>
+            {Object.entries(client.sensoryProfile).map(([key, value]) => {
+              const icons: Record<string, string> = {
+                visual: '👁️',
+                auditory: '👂',
+                tactile: '✋',
+                vestibular: '🔄',
+                proprioceptive: '💪',
+              };
+              return (
+                <div key={key} className="flex gap-3">
+                  <span className="text-xl">{icons[key] || '📝'}</span>
+                  <div className="flex-1">
+                    <p className="text-sm text-slate-600 capitalize">{key}</p>
+                    <p>{typeof value === 'string' ? value : JSON.stringify(value)}</p>
+                  </div>
                 </div>
-              </div>
-            )}
-            {client.sensoryProfile.auditory && (
-              <div className="flex gap-3">
-                <span className="text-xl">👂</span>
-                <div className="flex-1">
-                  <p className="text-sm text-slate-600">Auditory</p>
-                  <p>{client.sensoryProfile.auditory}</p>
-                </div>
-              </div>
-            )}
-            {client.sensoryProfile.tactile && (
-              <div className="flex gap-3">
-                <span className="text-xl">✋</span>
-                <div className="flex-1">
-                  <p className="text-sm text-slate-600">Tactile</p>
-                  <p>{client.sensoryProfile.tactile}</p>
-                </div>
-              </div>
-            )}
-            {client.sensoryProfile.vestibular && (
-              <div className="flex gap-3">
-                <span className="text-xl">🔄</span>
-                <div className="flex-1">
-                  <p className="text-sm text-slate-600">Vestibular</p>
-                  <p>{client.sensoryProfile.vestibular}</p>
-                </div>
-              </div>
-            )}
-            {client.sensoryProfile.proprioceptive && (
-              <div className="flex gap-3">
-                <span className="text-xl">💪</span>
-                <div className="flex-1">
-                  <p className="text-sm text-slate-600">Proprioceptive</p>
-                  <p>{client.sensoryProfile.proprioceptive}</p>
-                </div>
-              </div>
-            )}
+              );
+            })}
           </CardContent>
         </Card>
       )}
@@ -152,12 +125,93 @@ export function ClientProfile({ client }: ClientProfileProps) {
               Edit
             </Button>
           </CardHeader>
+          <CardContent className="space-y-3">
+            {client.communicationStyles.map((style, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Badge variant="outline" className="capitalize">
+                  {style.method.replace('_', ' ')}
+                </Badge>
+                <span className="text-sm text-slate-600 capitalize">
+                  ({style.proficiency.replace('_', ' ')})
+                </span>
+                {style.notes && (
+                  <span className="text-sm text-slate-500">- {style.notes}</span>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Initial Assessment */}
+      {client.initialAssessment && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Initial Assessment</CardTitle>
+            <Button variant="ghost" size="sm" className="gap-2">
+              <Edit className="size-4" />
+              Edit
+            </Button>
+          </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {client.communicationStyles.map((style, idx) => (
-                <Badge key={idx} variant="outline">{style}</Badge>
-              ))}
-            </div>
+            <p className="text-sm whitespace-pre-wrap">{client.initialAssessment}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Support Network */}
+      {client.supportNetwork && client.supportNetwork.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Support Network</CardTitle>
+            <Button variant="ghost" size="sm" className="gap-2">
+              <Edit className="size-4" />
+              Edit
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {client.supportNetwork.map((contact, idx) => (
+              <div key={idx} className="border-l-2 border-slate-200 pl-4">
+                <p className="font-medium">{contact.name}</p>
+                <p className="text-sm text-slate-600">{contact.role}</p>
+                {contact.contact && (
+                  <p className="text-sm text-slate-500">{contact.contact}</p>
+                )}
+                {contact.notes && (
+                  <p className="text-sm text-slate-500 mt-1">{contact.notes}</p>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Initial Goals */}
+      {client.initialGoals && client.initialGoals.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Initial Goals</CardTitle>
+            <Button variant="ghost" size="sm" className="gap-2">
+              <Edit className="size-4" />
+              Edit
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {client.initialGoals.map((goal) => (
+              <div key={goal.id} className="border-l-2 border-teal-200 pl-4">
+                <p className="font-medium">{goal.goalText}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  {goal.therapy && (
+                    <Badge variant="outline" className="text-xs">
+                      {goal.therapy}
+                    </Badge>
+                  )}
+                  {goal.setBy && (
+                    <span className="text-xs text-slate-500">Set by: {goal.setBy}</span>
+                  )}
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       )}

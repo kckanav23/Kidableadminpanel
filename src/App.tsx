@@ -8,7 +8,6 @@ import { Strategies } from './pages/Strategies';
 import { Resources } from './pages/Resources';
 import { Therapists } from './pages/Therapists';
 import { Parents } from './pages/Parents';
-import { AccessCodes } from './pages/AccessCodes';
 import { AuditLogs } from './pages/AuditLogs';
 import { Login } from './pages/Login';
 import { Toaster } from './components/ui/sonner';
@@ -50,7 +49,6 @@ function AuthenticatedApp() {
               <Route path="/resources" element={<Resources />} />
               <Route path="/therapists" element={<Therapists />} />
               <Route path="/parents" element={<Parents />} />
-              <Route path="/access-codes" element={<AccessCodes />} />
               <Route path="/audit-logs" element={<AuditLogs />} />
             </Routes>
           </div>

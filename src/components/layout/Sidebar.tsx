@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -6,19 +7,17 @@ import {
   FolderOpen, 
   UserCog, 
   Users2,
-  Key,
   ScrollText,
   LogOut,
   Menu,
   X
 } from 'lucide-react';
-import { currentUser } from '../../lib/mockData';
+import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
-import { useState } from 'react';
-import HeroSectionPurple from '../../imports/HeroSectionPurple';
+import HeroSectionPurple from '../graphics/HeroSectionPurple';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
-import kidAbleLogo from 'figma:asset/c3194f24799989b2e201ea0064d6189cbd339f2f.png';
+import kidAbleLogo from '../../assets/Layer_1-13.png';
 
 interface NavItem {
   label: string;
@@ -35,6 +34,7 @@ interface NavSection {
 export function Sidebar() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   const navSections: NavSection[] = [
     {
@@ -53,14 +53,13 @@ export function Sidebar() {
     {
       title: 'DIRECTORY',
       items: [
-        { label: 'Therapists', path: '/therapists', icon: <UserCog className="size-5" /> },
         { label: 'Parents', path: '/parents', icon: <Users2 className="size-5" /> },
       ],
     },
     {
       title: 'ADMIN',
       items: [
-        { label: 'Access Codes', path: '/access-codes', icon: <Key className="size-5" />, adminOnly: true },
+        { label: 'Therapists', path: '/therapists', icon: <UserCog className="size-5" />, adminOnly: true },
         { label: 'Audit Logs', path: '/audit-logs', icon: <ScrollText className="size-5" />, adminOnly: true },
       ],
     },
@@ -68,13 +67,8 @@ export function Sidebar() {
 
   const filteredSections = navSections.map(section => ({
     ...section,
-    items: section.items.filter(item => !item.adminOnly || currentUser.role === 'admin'),
+    items: section.items.filter(item => !item.adminOnly || user?.admin),
   })).filter(section => section.items.length > 0);
-
-  const handleLogout = () => {
-    // In a real app, this would clear auth tokens, etc.
-    alert('Logout functionality would be implemented here');
-  };
 
   const SidebarContent = () => (
     <>
@@ -123,17 +117,17 @@ export function Sidebar() {
       <div className="p-4 border-t border-gray-200">
         <div className="flex items-center gap-3 mb-3">
           <div className="flex items-center justify-center size-10 rounded-full bg-[#F4D16B] text-[#363530]">
-            <span>{currentUser.name.split(' ').map(n => n[0]).join('')}</span>
+            <span>{user?.fullName?.split(' ').map(n => n[0]).join('') || 'U'}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-900 truncate">{currentUser.name}</p>
-            <p className="text-xs text-gray-600 capitalize">{currentUser.role}</p>
+            <p className="text-sm text-gray-900 truncate">{user?.fullName || 'User'}</p>
+            <p className="text-xs text-gray-600 capitalize">{user?.role || 'staff'}</p>
           </div>
         </div>
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleLogout}
+          onClick={logout}
           className="w-full justify-start gap-2 text-gray-700 hover:text-[#0B5B45] hover:bg-gray-100"
         >
           <LogOut className="size-4" />

@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authApi, getAccessCode, StaffLoginResponse } from '../lib/api';
+import { getAccessCode, clearAccessCode, setAccessCode } from '../lib/api';
+import { getApiClient, refreshApiClient } from '../lib/api-client';
+import type { StaffLoginResponse } from '../types/api';
 
 interface AuthContextType {
   user: StaffLoginResponse | null;
@@ -15,36 +17,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<StaffLoginResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for existing access code on mount
+  // Check for existing access code on mount and validate
   useEffect(() => {
     const accessCode = getAccessCode();
     if (accessCode) {
-      // We have an access code, but we don't have user details
-      // In a real app, you might want to validate the code with the backend
-      // For now, we'll just set a minimal user object
-      setUser({
-        userId: '',
-        userName: 'Staff Member',
-        userEmail: '',
-        admin: false,
-        code: accessCode,
-      });
+      // Validate the access code with the backend
+      const validateAccessCode = async () => {
+        try {
+          const api = getApiClient();
+          const response = await api.staffAuth.login({
+            requestBody: { accessCode },
+          });
+          setUser(response);
+        } catch (error) {
+          // Invalid or expired access code, clear it
+          clearAccessCode();
+          setUser(null);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      validateAccessCode();
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   const login = async (code: string) => {
     setIsLoading(true);
     try {
-      const response = await authApi.login(code);
+      const api = getApiClient();
+      const response = await api.staffAuth.login({
+        requestBody: { accessCode: code },
+      });
       setUser(response);
+      // Store access code on successful login
+      setAccessCode(code);
+      // Refresh API client with new auth headers
+      refreshApiClient();
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
   const logout = () => {
-    authApi.logout();
+    clearAccessCode();
+    refreshApiClient(); // Refresh client after clearing auth
     setUser(null);
   };
 

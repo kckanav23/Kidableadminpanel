@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { clients, parents, users, goals, sessions, homework, strategies, resources, journalEntries } from '../lib/mockData';
 import { formatDate } from '../lib/utils';
-import { ClientAvatar } from '../components/ClientAvatar';
-import { TherapyBadge } from '../components/TherapyBadge';
+import { ClientAvatar } from '../components/client/ClientAvatar';
+import { TherapyBadge } from '../components/badges/TherapyBadge';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { ChevronLeft, MoreVertical } from 'lucide-react';
+import { ChevronLeft, MoreVertical, Loader2 } from 'lucide-react';
 import { ClientProfile } from '../components/client/ClientProfile';
 import { ClientGoals } from '../components/client/ClientGoals';
 import { ClientSessions } from '../components/client/ClientSessions';
@@ -15,19 +14,54 @@ import { ClientResources } from '../components/client/ClientResources';
 import { ClientStrategies } from '../components/client/ClientStrategies';
 import { ClientMoodJournal } from '../components/client/ClientMoodJournal';
 import { ClientTeam } from '../components/client/ClientTeam';
+import { getApiClient, handleApiError } from '../lib/api-client';
+import type { ClientProfile as ClientProfileType } from '../types/api';
+import { toast } from 'sonner';
 
 export function ClientDetail() {
   const { clientId } = useParams<{ clientId: string }>();
   const [activeTab, setActiveTab] = useState('profile');
+  const [client, setClient] = useState<ClientProfileType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const client = clients.find(c => c.id === clientId);
-  const primaryTherapist = users.find(u => u.id === client?.primaryTherapistId);
-  const primaryCaregiver = parents.find(p => p.id === client?.primaryCaregiverId);
+  // Fetch client profile from API
+  useEffect(() => {
+    if (!clientId) return;
 
-  if (!client) {
+    const fetchClient = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const api = getApiClient();
+        const response = await api.adminClients.getClient({ clientId });
+        setClient(response);
+      } catch (err) {
+        console.error('Error fetching client:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load client';
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClient();
+  }, [clientId]);
+
+  if (loading) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-600">Client not found</p>
+        <Loader2 className="size-6 animate-spin text-[#0B5B45] mx-auto" />
+        <p className="text-slate-600 mt-2">Loading client...</p>
+      </div>
+    );
+  }
+
+  if (error || !client) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-slate-600 mb-4">{error || 'Client not found'}</p>
         <Link to="/clients">
           <Button variant="outline" className="mt-4">Back to Clients</Button>
         </Link>
@@ -36,8 +70,12 @@ export function ClientDetail() {
   }
 
   const fullName = `${client.firstName} ${client.lastName}`;
-  const sinceDate = formatDate(client.therapyStartDate);
-  const dobDate = formatDate(client.dateOfBirth);
+  const dobDate = client.dateOfBirth ? formatDate(new Date(client.dateOfBirth)) : 'N/A';
+  
+  // Find primary parent from clientParents array
+  const primaryParent = client.clientParents?.find(p => p.isPrimary)?.parents;
+  const primaryParentName = primaryParent?.fullName || 'Not assigned';
+  const primaryParentRelationship = client.clientParents?.find(p => p.isPrimary)?.relationship || '';
 
   return (
     <div className="space-y-6">
@@ -55,12 +93,15 @@ export function ClientDetail() {
             <div>
               <h1 className="text-2xl mb-1">{fullName}</h1>
               <p className="text-slate-600 mb-2">
-                {client.age} years old • Born {dobDate} • Since {sinceDate}
+                {client.age ? `${client.age} years old` : ''} • Born {dobDate}
               </p>
               <div className="flex items-center gap-2">
-                {client.therapyTypes.map(type => (
-                  <TherapyBadge key={type} type={type} />
-                ))}
+                {client.therapies.map((therapy, idx) => {
+                  const therapyType = therapy.toLowerCase() as 'aba' | 'speech' | 'ot';
+                  return (
+                    <TherapyBadge key={`therapy-${idx}`} type={therapyType} />
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -69,18 +110,16 @@ export function ClientDetail() {
           </Button>
         </div>
 
-        <div className="grid gap-2 text-sm">
-          <div>
-            <span className="text-slate-600">Primary Therapist: </span>
-            <span className="font-medium">{primaryTherapist?.name}</span>
+        {primaryParent && (
+          <div className="grid gap-2 text-sm">
+            <div>
+              <span className="text-slate-600">Primary Caregiver: </span>
+              <span className="font-medium">
+                {primaryParentName} {primaryParentRelationship ? `(${primaryParentRelationship})` : ''}
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="text-slate-600">Primary Caregiver: </span>
-            <span className="font-medium">
-              {primaryCaregiver?.name} ({primaryCaregiver?.relationship})
-            </span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -143,24 +182,15 @@ export function ClientDetail() {
         </TabsContent>
 
         <TabsContent value="goals" className="mt-0">
-          <ClientGoals
-            clientId={client.id}
-            goals={goals.filter(g => g.clientId === client.id)}
-          />
+          <ClientGoals clientId={client.id} />
         </TabsContent>
 
         <TabsContent value="sessions" className="mt-0">
-          <ClientSessions
-            clientId={client.id}
-            sessions={sessions.filter(s => s.clientId === client.id)}
-          />
+          <ClientSessions clientId={client.id} />
         </TabsContent>
 
         <TabsContent value="homework" className="mt-0">
-          <ClientHomework
-            clientId={client.id}
-            homework={homework.filter(h => h.clientId === client.id)}
-          />
+          <ClientHomework clientId={client.id} />
         </TabsContent>
 
         <TabsContent value="resources" className="mt-0">
@@ -172,10 +202,7 @@ export function ClientDetail() {
         </TabsContent>
 
         <TabsContent value="mood" className="mt-0">
-          <ClientMoodJournal
-            clientId={client.id}
-            entries={journalEntries.filter(j => j.clientId === client.id)}
-          />
+          <ClientMoodJournal clientId={client.id} />
         </TabsContent>
 
         <TabsContent value="team" className="mt-0">

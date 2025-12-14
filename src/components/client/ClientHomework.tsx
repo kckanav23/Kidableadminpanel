@@ -1,10 +1,9 @@
 import { Homework } from '../../types';
-import { users, goals } from '../../lib/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { TherapyBadge } from '../TherapyBadge';
-import { Plus, Calendar, Target, User, Edit, Eye, Trash2 } from 'lucide-react';
+import { TherapyBadge } from '../badges/TherapyBadge';
+import { Plus, Calendar, Target, User, Edit, Eye, Trash2, Loader2 } from 'lucide-react';
 import { formatDate } from '../../lib/utils';
 import { useState, useEffect } from 'react';
 import {
@@ -22,13 +21,15 @@ import {
   HomeworkFormData,
   HomeworkCompletionData,
 } from '../forms';
-import { HomeworkCompletionHistory } from '../homework/HomeworkCompletionHistory';
-import { homeworkApi, HomeworkResponse, HomeworkCompletionRequest } from '../../lib/api';
+import { HomeworkCompletionHistory } from './homework/HomeworkCompletionHistory';
+import { getApiClient } from '../../lib/api-client';
+import type { HomeworkResponse, HomeworkUpdateRequest, HomeworkCompletionRequest } from '../../types/api';
+import { HomeworkCreateRequest } from '../../types/api';
 import { toast } from 'sonner';
 
 interface ClientHomeworkProps {
   clientId: string;
-  homework: Homework[];
+  homework?: Homework[]; // Optional for backward compatibility
 }
 
 const statusColors = {
@@ -45,7 +46,7 @@ const statusLabels = {
   'not-started': 'Not Started',
 };
 
-export function ClientHomework({ clientId, homework }: ClientHomeworkProps) {
+export function ClientHomework({ clientId, homework: initialHomework }: ClientHomeworkProps) {
   const [filter, setFilter] = useState<string>('active');
   const [homeworkFormOpen, setHomeworkFormOpen] = useState(false);
   const [completionFormOpen, setCompletionFormOpen] = useState(false);
@@ -54,35 +55,108 @@ export function ClientHomework({ clientId, homework }: ClientHomeworkProps) {
   const [selectedHomework, setSelectedHomework] = useState<Homework | null>(null);
   const [selectedApiHomework, setSelectedApiHomework] = useState<HomeworkResponse | null>(null);
   const [apiHomework, setApiHomework] = useState<HomeworkResponse[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!initialHomework);
   const [viewLogOpen, setViewLogOpen] = useState(false);
+  const [availableGoals, setAvailableGoals] = useState<Array<{ id: string; title: string }>>([]);
 
   // Fetch homework from API
   useEffect(() => {
     const fetchHomework = async () => {
       try {
         setLoading(true);
-        const data = await homeworkApi.listHomework(clientId, filter === 'active');
+        const api = getApiClient();
+        const data = await api.adminHomework.getHomework({
+          clientId,
+          active: filter === 'active',
+        });
         setApiHomework(data);
       } catch (error) {
         console.error('Error fetching homework:', error);
-        // Silently fail and use mock data
+        toast.error('Failed to load homework');
+        setApiHomework([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchHomework();
-  }, [clientId, filter]);
+    if (!initialHomework) {
+      fetchHomework();
+    }
+  }, [clientId, filter, initialHomework]);
 
-  const activeHomework = homework.filter(h => h.status !== 'not-worked');
-  const displayHomework = filter === 'active' ? activeHomework : homework;
+  // Fetch available goals for the homework form
+  useEffect(() => {
+    const fetchGoals = async () => {
+      try {
+        const api = getApiClient();
+        const goalsData = await api.adminGoals.getGoals({
+          clientId,
+          status: 'active', // Only show active goals
+        });
+        setAvailableGoals(goalsData.map(g => ({
+          id: g.id || '',
+          title: g.title,
+        })));
+      } catch (error) {
+        console.error('Error fetching goals:', error);
+        // Silently fail - goals are optional for homework
+        setAvailableGoals([]);
+      }
+    };
 
-  const handleCreateHomework = (data: HomeworkFormData) => {
-    console.log('Creating homework:', data);
-    // TODO: Implement API call
-    setHomeworkFormOpen(false);
-    setEditingHomework(null);
+    fetchGoals();
+  }, [clientId]);
+
+  // Use API homework if available, otherwise use initial homework prop
+  const allHomework = apiHomework.length > 0 ? apiHomework : (initialHomework || []);
+  
+  // Filter homework based on active status
+  const displayHomework = filter === 'active' 
+    ? allHomework.filter(h => h.isActive !== false)
+    : allHomework;
+
+  const handleCreateHomework = async (data: HomeworkFormData) => {
+    try {
+      const api = getApiClient();
+      
+      // Map therapy string to enum
+      const therapyMap: Record<string, HomeworkCreateRequest.therapy> = {
+        'ABA': HomeworkCreateRequest.therapy.ABA,
+        'Speech': HomeworkCreateRequest.therapy.SPEECH,
+        'OT': HomeworkCreateRequest.therapy.OT,
+      };
+      
+      const request: HomeworkCreateRequest = {
+        title: data.title,
+        description: data.description,
+        instructions: data.instructions ? [data.instructions] : [],
+        therapy: therapyMap[data.therapy] || HomeworkCreateRequest.therapy.ABA,
+        relatedGoalId: data.relatedGoalId,
+        dataType: HomeworkCreateRequest.dataType.FREQUENCY, // Default, should come from form
+        active: data.isActive,
+        assignedDate: data.assignedDate,
+        dueDate: data.dueDate,
+      };
+
+      await api.adminHomework.createHomework({
+        clientId,
+        requestBody: request,
+      });
+
+      // Refresh homework list
+      const updated = await api.adminHomework.getHomework({
+        clientId,
+        active: filter === 'active',
+      });
+      setApiHomework(updated);
+
+      toast.success('Homework created successfully');
+      setHomeworkFormOpen(false);
+      setEditingHomework(null);
+    } catch (error) {
+      console.error('Error creating homework:', error);
+      toast.error('Failed to create homework');
+    }
   };
 
   const handleEditHomework = (hw: Homework) => {
@@ -103,23 +177,32 @@ export function ClientHomework({ clientId, homework }: ClientHomeworkProps) {
   };
 
   const handleSubmitCompletionApi = async (data: HomeworkCompletionData) => {
-    if (!selectedApiHomework) return;
+    if (!selectedApiHomework?.id) return;
 
     try {
+      const api = getApiClient();
       const request: HomeworkCompletionRequest = {
         completionDate: data.completionDate,
         frequencyCount: data.frequencyCount,
         durationMinutes: data.durationMinutes,
-        status: data.status,
+        status: data.status as HomeworkCompletionRequest.status,
         notes: data.notes,
         loggedByParent: data.loggedByParent,
       };
 
-      await homeworkApi.logCompletion(clientId, selectedApiHomework.id, request);
+      await api.adminHomework.logCompletion1({
+        clientId,
+        homeworkId: selectedApiHomework.id,
+        requestBody: request,
+      });
+      
       toast.success('Completion logged successfully');
       
       // Refresh homework list
-      const updated = await homeworkApi.listHomework(clientId, filter === 'active');
+      const updated = await api.adminHomework.getHomework({
+        clientId,
+        active: filter === 'active',
+      });
       setApiHomework(updated);
       
       setCompletionFormOpen(false);
@@ -135,12 +218,30 @@ export function ClientHomework({ clientId, homework }: ClientHomeworkProps) {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
-    console.log('Deleting homework:', selectedHomework?.id);
-    // TODO: Implement API call
-    toast.success('Homework deleted successfully');
-    setDeleteDialogOpen(false);
-    setSelectedHomework(null);
+  const confirmDelete = async () => {
+    if (!selectedHomework?.id) return;
+
+    try {
+      const api = getApiClient();
+      await api.adminHomework.deleteHomework({
+        clientId,
+        homeworkId: selectedHomework.id,
+      });
+
+      // Refresh homework list
+      const updated = await api.adminHomework.getHomework({
+        clientId,
+        active: filter === 'active',
+      });
+      setApiHomework(updated);
+
+      toast.success('Homework deleted successfully');
+      setDeleteDialogOpen(false);
+      setSelectedHomework(null);
+    } catch (error) {
+      console.error('Error deleting homework:', error);
+      toast.error('Failed to delete homework');
+    }
   };
 
   const handleViewLog = (hw: HomeworkResponse) => {
@@ -176,7 +277,14 @@ export function ClientHomework({ clientId, homework }: ClientHomeworkProps) {
       </div>
 
       {/* Homework List */}
-      {displayHomework.length === 0 && apiHomework.length === 0 ? (
+      {loading ? (
+        <Card>
+          <CardContent className="text-center py-12">
+            <Loader2 className="size-6 animate-spin text-[#0B5B45] mx-auto" />
+            <p className="text-slate-600 mt-2">Loading homework...</p>
+          </CardContent>
+        </Card>
+      ) : displayHomework.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
             <p className="text-slate-600 mb-4">No homework assigned yet</p>
@@ -193,9 +301,10 @@ export function ClientHomework({ clientId, homework }: ClientHomeworkProps) {
       ) : (
         <div className="space-y-4">
           {/* API Homework (from backend) */}
-          {apiHomework.map(hw => {
-            const statusColor = statusColors[hw.status] || statusColors['not-started'];
-            const statusLabel = statusLabels[hw.status] || statusLabels['not-started'];
+          {displayHomework.map(hw => {
+            const hwStatus = hw.status?.toLowerCase().replace('_', '-') || 'not-started';
+            const statusColor = statusColors[hwStatus as keyof typeof statusColors] || statusColors['not-started'];
+            const statusLabel = statusLabels[hwStatus as keyof typeof statusLabels] || statusLabels['not-started'];
 
             return (
               <Card key={hw.id}>
@@ -203,7 +312,7 @@ export function ClientHomework({ clientId, homework }: ClientHomeworkProps) {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <TherapyBadge type={hw.therapy.toLowerCase() as any} showLabel={false} />
+                        <TherapyBadge type={(hw.therapy?.toLowerCase() || 'aba') as 'aba' | 'speech' | 'ot'} showLabel={false} />
                         <CardTitle className="text-lg">{hw.title}</CardTitle>
                       </div>
                       {hw.description && (
@@ -216,12 +325,21 @@ export function ClientHomework({ clientId, homework }: ClientHomeworkProps) {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  {hw.purpose && (
+                    <p className="text-sm">
+                      <span className="text-slate-600">Purpose: </span>
+                      {hw.purpose}
+                    </p>
+                  )}
+
                   <div className="grid gap-2 text-sm md:grid-cols-2">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="size-4 text-slate-400" />
-                      <span className="text-slate-600">Assigned:</span>
-                      <span>{formatDate(new Date(hw.assignedDate))}</span>
-                    </div>
+                    {hw.assignedDate && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="size-4 text-slate-400" />
+                        <span className="text-slate-600">Assigned:</span>
+                        <span>{formatDate(new Date(hw.assignedDate))}</span>
+                      </div>
+                    )}
                     {hw.dueDate && (
                       <div className="flex items-center gap-2">
                         <Calendar className="size-4 text-slate-400" />
@@ -245,10 +363,10 @@ export function ClientHomework({ clientId, homework }: ClientHomeworkProps) {
                     )}
                   </div>
 
-                  {hw.frequencyTarget && (
+                  {hw.frequency && (
                     <div className="pt-2 border-t text-sm">
-                      <span className="text-slate-600">Target Frequency: </span>
-                      <span className="font-medium">{hw.frequencyTarget}</span>
+                      <span className="text-slate-600">Frequency: </span>
+                      <span className="font-medium">{hw.frequency}</span>
                     </div>
                   )}
 
@@ -262,15 +380,17 @@ export function ClientHomework({ clientId, homework }: ClientHomeworkProps) {
                   )}
 
                   <div className="flex gap-2 pt-2 flex-wrap">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="gap-2"
-                      onClick={() => handleViewLog(hw)}
-                    >
-                      <Eye className="size-4" />
-                      View Log
-                    </Button>
+                    {hw.homeworkCompletions && hw.homeworkCompletions.length > 0 && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-2"
+                        onClick={() => handleViewLog(hw)}
+                      >
+                        <Eye className="size-4" />
+                        View Log
+                      </Button>
+                    )}
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -283,105 +403,40 @@ export function ClientHomework({ clientId, homework }: ClientHomeworkProps) {
                       <Plus className="size-4" />
                       Log Completion
                     </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-
-          {/* Mock Homework (legacy data) */}
-          {displayHomework.map(hw => {
-            const assignedBy = users.find(u => u.id === hw.assignedById);
-            const relatedGoal = hw.goalId ? goals.find(g => g.id === hw.goalId) : null;
-
-            return (
-              <Card key={hw.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <TherapyBadge type={hw.therapyType} showLabel={false} />
-                        <CardTitle className="text-lg">{hw.title}</CardTitle>
-                      </div>
-                      <p className="text-sm text-slate-600">{hw.description}</p>
-                    </div>
-                    <Badge variant="outline" className={statusColors[hw.status]}>
-                      {statusLabels[hw.status]}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-sm">
-                    <span className="text-slate-600">Purpose: </span>
-                    {hw.purpose}
-                  </p>
-
-                  <div className="grid gap-2 text-sm md:grid-cols-2">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="size-4 text-slate-400" />
-                      <span className="text-slate-600">Assigned:</span>
-                      <span>{formatDate(hw.assignedDate)}</span>
-                    </div>
-                    {hw.goalId && relatedGoal && (
-                      <div className="flex items-center gap-2">
-                        <Target className="size-4 text-slate-400" />
-                        <span className="text-slate-600">Goal:</span>
-                        <span className="truncate">{relatedGoal.title}</span>
-                      </div>
+                    {hw.id && (
+                      <>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="gap-2"
+                          onClick={() => {
+                            // TODO: Implement edit functionality
+                            toast.info('Edit functionality coming soon');
+                          }}
+                        >
+                          <Edit className="size-4" />
+                          Edit
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="gap-2 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            setSelectedHomework({ id: hw.id!, clientId: hw.clientId || '', title: hw.title, description: hw.description || '', purpose: hw.purpose || '', therapyType: (hw.therapy?.toLowerCase() || 'aba') as 'aba' | 'speech' | 'ot', status: hwStatus as any, assignedDate: hw.assignedDate ? new Date(hw.assignedDate) : new Date(), assignedById: '', goalId: hw.relatedGoalId, completionCount: hw.homeworkCompletions?.length || 0 });
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="size-4" />
+                          Delete
+                        </Button>
+                      </>
                     )}
-                    <div className="flex items-center gap-2">
-                      <User className="size-4 text-slate-400" />
-                      <span className="text-slate-600">Assigned by:</span>
-                      <span>{assignedBy?.name}</span>
-                    </div>
-                  </div>
-
-                  {hw.completionCount > 0 && (
-                    <div className="pt-2 border-t">
-                      <p className="text-sm">
-                        <span className="text-slate-600">Completions: </span>
-                        <span className="font-medium">{hw.completionCount} times logged</span>
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex gap-2 pt-2 flex-wrap">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Eye className="size-4" />
-                      View Log
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="gap-2"
-                      onClick={() => handleLogCompletion(hw)}
-                    >
-                      <Plus className="size-4" />
-                      Log Completion
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="gap-2"
-                      onClick={() => handleEditHomework(hw)}
-                    >
-                      <Edit className="size-4" />
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="gap-2 text-destructive hover:text-destructive"
-                      onClick={() => handleDeleteHomework(hw)}
-                    >
-                      <Trash2 className="size-4" />
-                      Delete
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
             );
           })}
+
         </div>
       )}
 
@@ -411,10 +466,7 @@ export function ClientHomework({ clientId, homework }: ClientHomeworkProps) {
             instructions: editingHomework.instructions,
             relatedGoalId: editingHomework.goalId,
           } : undefined}
-          availableGoals={goals.filter(g => g.clientId === clientId).map(g => ({
-            id: g.id,
-            title: g.title,
-          }))}
+          availableGoals={availableGoals}
         />
       </FormDialog>
 

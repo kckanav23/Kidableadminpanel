@@ -76,15 +76,36 @@ const zoneOptions = [
   { value: 'blue', label: 'Blue', color: 'bg-blue-500' },
 ];
 
+// Valid prompt types from API enum
 const promptTypeOptions = [
-  'Full Physical',
-  'Partial Physical',
-  'Modeling',
-  'Verbal',
-  'Gestural',
-  'Visual',
-  'Independent',
+  { label: 'Full Physical', value: 'full_physical' },
+  { label: 'Partial Physical', value: 'partial_physical' },
+  { label: 'Verbal', value: 'verbal' },
+  { label: 'Textual', value: 'textual' },
+  { label: 'Gestural', value: 'gestural' },
+  { label: 'Independent', value: 'independent' },
 ];
+
+// Map display labels to API values
+const promptTypeLabelToValue: Record<string, string> = {
+  'Full Physical': 'full_physical',
+  'Partial Physical': 'partial_physical',
+  'Modeling': 'verbal', // Map old "Modeling" to "verbal" as fallback
+  'Verbal': 'verbal',
+  'Gestural': 'gestural',
+  'Visual': 'textual', // Map old "Visual" to "textual" as fallback
+  'Independent': 'independent',
+};
+
+// Map API values to display labels
+const promptTypeValueToLabel: Record<string, string> = {
+  'full_physical': 'Full Physical',
+  'partial_physical': 'Partial Physical',
+  'verbal': 'Verbal',
+  'textual': 'Textual',
+  'gestural': 'Gestural',
+  'independent': 'Independent',
+};
 
 export function SessionForm({
   onSubmit,
@@ -379,9 +400,9 @@ export function SessionForm({
                             <SelectValue placeholder="Select..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {promptTypeOptions.map((type) => (
-                              <SelectItem key={type} value={type}>
-                                {type}
+                            {promptTypeOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
