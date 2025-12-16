@@ -60,7 +60,7 @@ export class AdminClientParentsService {
      * @returns ClientParentResponse OK
      * @throws ApiError
      */
-    public list5({
+    public list6({
         clientId,
     }: {
         clientId: string,
@@ -79,7 +79,7 @@ export class AdminClientParentsService {
      * @returns ClientParentResponse OK
      * @throws ApiError
      */
-    public create4({
+    public create5({
         clientId,
         requestBody,
     }: {

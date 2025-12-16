@@ -39,7 +39,7 @@ export function AuditLogs() {
       setLoading(true);
       try {
         const api = getApiClient();
-        const response = await api.adminAuditLog.list7({
+        const response = await api.adminAuditLog.list8({
           resourceType: resourceFilter !== 'all' ? resourceFilter : undefined,
           size: 100, // Get a reasonable number of logs
         });

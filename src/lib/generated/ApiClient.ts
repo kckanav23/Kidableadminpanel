@@ -16,6 +16,7 @@ import { AdminClientTherapistsService } from './services/AdminClientTherapistsSe
 import { AdminGoalProgressService } from './services/AdminGoalProgressService';
 import { AdminGoalsService } from './services/AdminGoalsService';
 import { AdminHomeworkService } from './services/AdminHomeworkService';
+import { AdminParentAccessCodesService } from './services/AdminParentAccessCodesService';
 import { AdminParentsService } from './services/AdminParentsService';
 import { AdminResourceLibraryService } from './services/AdminResourceLibraryService';
 import { AdminSessionActivitiesService } from './services/AdminSessionActivitiesService';
@@ -48,6 +49,7 @@ export class ApiClient {
     public readonly adminGoalProgress: AdminGoalProgressService;
     public readonly adminGoals: AdminGoalsService;
     public readonly adminHomework: AdminHomeworkService;
+    public readonly adminParentAccessCodes: AdminParentAccessCodesService;
     public readonly adminParents: AdminParentsService;
     public readonly adminResourceLibrary: AdminResourceLibraryService;
     public readonly adminSessionActivities: AdminSessionActivitiesService;
@@ -70,7 +72,7 @@ export class ApiClient {
     public readonly request: BaseHttpRequest;
     constructor(config?: Partial<OpenAPIConfig>, HttpRequest: HttpRequestConstructor = FetchHttpRequest) {
         this.request = new HttpRequest({
-            BASE: config?.BASE ?? 'http://parent.kidable.in',
+            BASE: config?.BASE ?? 'http://localhost:40417',
             VERSION: config?.VERSION ?? '0.0.1',
             WITH_CREDENTIALS: config?.WITH_CREDENTIALS ?? false,
             CREDENTIALS: config?.CREDENTIALS ?? 'include',
@@ -91,6 +93,7 @@ export class ApiClient {
         this.adminGoalProgress = new AdminGoalProgressService(this.request);
         this.adminGoals = new AdminGoalsService(this.request);
         this.adminHomework = new AdminHomeworkService(this.request);
+        this.adminParentAccessCodes = new AdminParentAccessCodesService(this.request);
         this.adminParents = new AdminParentsService(this.request);
         this.adminResourceLibrary = new AdminResourceLibraryService(this.request);
         this.adminSessionActivities = new AdminSessionActivitiesService(this.request);

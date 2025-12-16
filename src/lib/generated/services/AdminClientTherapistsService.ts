@@ -13,7 +13,7 @@ export class AdminClientTherapistsService {
      * @returns ClientTherapistResponse OK
      * @throws ApiError
      */
-    public list4({
+    public list5({
         clientId,
     }: {
         clientId: string,

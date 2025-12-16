@@ -1,17 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { calculateAge } from '../../lib/utils';
-import { getApiClient, handleApiError } from '../../lib/api-client';
+import { calculateAge, formatDate } from '../../lib/utils';
 import type { TherapistResponse, ParentResponse } from '../../types/api';
 import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+import { THERAPY_LABELS } from '../../lib/constants';
+
 import {
   Form,
   FormControl,
@@ -35,16 +28,17 @@ import { Textarea } from '../ui/textarea';
 import { Calendar } from '../ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { CalendarIcon, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { formatDate } from '../../lib/utils';
-import { THERAPY_LABELS } from '../../lib/constants';
 
-interface AddClientDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+interface AddClientFormProps {
+  onSubmit: (data: AddClientFormData) => void | Promise<void>;
+  onCancel: () => void;
+  therapists: TherapistResponse[];
+  parents: ParentResponse[];
+  isSubmitting?: boolean;
+  initialData?: Partial<AddClientFormData>;
 }
 
-interface ClientFormData {
+export interface AddClientFormData {
   // Step 1: Basic Information
   firstName: string;
   lastName: string;
@@ -52,13 +46,13 @@ interface ClientFormData {
   therapyStartDate: Date | undefined;
   status: 'active' | 'inactive' | 'suspended';
   photoUrl?: string;
-  
+
   // Step 2: Therapy Types
   therapyTypes: Array<'aba' | 'speech' | 'ot'>;
-  
-  // Step 3: Therapist Assignment
+
+  // Step 3: Therapist Assignment (optional)
   therapistId: string;
-  
+
   // Step 4: Parent Assignment/Creation
   parentAction: 'existing' | 'new' | 'skip';
   existingParentId: string;
@@ -67,34 +61,38 @@ interface ClientFormData {
   newParentPhone: string;
   newParentRelationship: string;
   isPrimaryParent: boolean;
-  
+
   // Step 5: Sensory Profile
   visual?: string;
   auditory?: string;
   tactile?: string;
   vestibular?: string;
   proprioceptive?: string;
-  
+
   // Step 6: Preferences & Dislikes
   preferences?: string;
   dislikes?: string;
-  
+
   // Step 7: Communication Styles (optional)
   communicationStyles?: string;
 }
 
 const TOTAL_STEPS = 7;
 
-export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDialogProps) {
+export function AddClientForm({
+  onSubmit,
+  onCancel,
+  therapists,
+  parents,
+  isSubmitting = false,
+  initialData,
+}: AddClientFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [dobOpen, setDobOpen] = useState(false);
   const [therapyStartOpen, setTherapyStartOpen] = useState(false);
-  const [therapists, setTherapists] = useState<TherapistResponse[]>([]);
-  const [parents, setParents] = useState<ParentResponse[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const currentYear = new Date().getFullYear();
 
-  const form = useForm<ClientFormData>({
+  const form = useForm<AddClientFormData>({
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -119,54 +117,28 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
       preferences: '',
       dislikes: '',
       communicationStyles: '',
+      ...initialData,
     },
   });
 
-  const therapyTypes = form.watch('therapyTypes');
+  const therapyTypesValue = form.watch('therapyTypes');
   const dateOfBirth = form.watch('dateOfBirth');
   const parentAction = form.watch('parentAction');
 
-  // Fetch therapists and parents when dialog opens
   useEffect(() => {
-    if (open) {
-      const fetchData = async () => {
-        setLoading(true);
-        try {
-          const api = getApiClient();
-          const [therapistsData, parentsData] = await Promise.all([
-            api.adminTherapists.list({ size: 100 }),
-            api.adminParents.list6({ size: 100 }),
-          ]);
-          setTherapists(therapistsData.items || []);
-          setParents(parentsData.items || []);
-        } catch (error) {
-          console.error('Error fetching therapists/parents:', error);
-          toast.error('Failed to load therapists and parents');
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchData();
+    // When using inside FormDialog, we reset whenever the component remounts / initialData changes
+    if (initialData) {
+      form.reset({ ...form.getValues(), ...initialData });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData]);
+
+  const toggleTherapyType = (type: 'aba' | 'speech' | 'ot') => {
+    const current = therapyTypesValue || [];
+    if (current.includes(type)) {
+      form.setValue('therapyTypes', current.filter((t) => t !== type));
     } else {
-      // Reset form and step when dialog closes
-      form.reset();
-      setCurrentStep(1);
-    }
-  }, [open, form]);
-
-  const nextStep = async () => {
-    // Validate current step before proceeding
-    const isValid = await validateCurrentStep();
-    if (!isValid) return;
-
-    if (currentStep < TOTAL_STEPS) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      form.setValue('therapyTypes', [...current, type]);
     }
   };
 
@@ -174,7 +146,7 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
     const values = form.getValues();
 
     switch (currentStep) {
-      case 1: // Basic Information
+      case 1:
         if (!values.firstName.trim()) {
           form.setError('firstName', { type: 'manual', message: 'First name is required' });
           return false;
@@ -188,22 +160,25 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
           return false;
         }
         if (!values.therapyStartDate) {
-          form.setError('therapyStartDate', { type: 'manual', message: 'Therapy start date is required' });
+          form.setError('therapyStartDate', {
+            type: 'manual',
+            message: 'Therapy start date is required',
+          });
           return false;
         }
         return true;
 
-      case 2: // Therapy Types
+      case 2:
         if (!values.therapyTypes || values.therapyTypes.length === 0) {
           toast.error('Please select at least one therapy type');
           return false;
         }
         return true;
 
-      case 3: // Therapist (optional, can skip)
+      case 3:
         return true;
 
-      case 4: // Parent
+      case 4:
         if (values.parentAction === 'existing' && !values.existingParentId) {
           toast.error('Please select a parent');
           return false;
@@ -225,141 +200,26 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
     }
   };
 
-  const onSubmit = async () => {
-    if (isSubmitting) return;
+  const nextStep = async () => {
+    const isValid = await validateCurrentStep();
+    if (!isValid) return;
+    if (currentStep < TOTAL_STEPS) setCurrentStep((s) => s + 1);
+  };
 
+  const prevStep = () => {
+    if (currentStep > 1) setCurrentStep((s) => s - 1);
+  };
+
+  const submitFinal = async () => {
     const isValid = await validateCurrentStep();
     if (!isValid) return;
 
-    setIsSubmitting(true);
-    try {
-      const data = form.getValues();
-      
-      if (!data.dateOfBirth || !data.therapyStartDate) {
-        toast.error('Date of birth and therapy start date are required');
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (!data.therapyTypes || data.therapyTypes.length === 0) {
-        toast.error('Please select at least one therapy type');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const api = getApiClient();
-
-      // Step 1: Create the client
-      const clientResponse = await api.adminClients.createClient({
-        requestBody: {
-          firstName: data.firstName,
-          lastName: data.lastName,
-          dateOfBirth: data.dateOfBirth.toISOString().split('T')[0],
-          age: calculateAge(data.dateOfBirth),
-          photoUrl: data.photoUrl || undefined,
-          therapyStartDate: data.therapyStartDate.toISOString().split('T')[0],
-          therapies: data.therapyTypes.map((t): 'ABA' | 'Speech' | 'OT' => {
-            // Map lowercase to proper API format
-            if (t === 'aba') return 'ABA';
-            if (t === 'speech') return 'Speech';
-            if (t === 'ot') return 'OT';
-            return 'ABA'; // fallback
-          }),
-          status: data.status as 'active' | 'inactive' | 'suspended' as any,
-          sensoryProfile: (data.visual || data.auditory || data.tactile || data.vestibular || data.proprioceptive)
-            ? {
-                ...(data.visual && { visual: data.visual }),
-                ...(data.auditory && { auditory: data.auditory }),
-                ...(data.tactile && { tactile: data.tactile }),
-                ...(data.vestibular && { vestibular: data.vestibular }),
-                ...(data.proprioceptive && { proprioceptive: data.proprioceptive }),
-              }
-            : undefined,
-          preferences: data.preferences
-            ? data.preferences.split(',').map(p => p.trim()).filter(Boolean)
-            : undefined,
-          dislikes: data.dislikes
-            ? data.dislikes.split(',').map(d => d.trim()).filter(Boolean)
-            : undefined,
-          notes: data.communicationStyles || undefined,
-        },
-      });
-
-      const clientId = clientResponse.id;
-      if (!clientId) {
-        throw new Error('Client ID not returned from API');
-      }
-
-      // Step 2: Assign therapist if selected
-      if (data.therapistId) {
-        try {
-          await api.adminClientTherapists.assign({
-            clientId,
-            requestBody: {
-              therapistId: data.therapistId,
-              primary: true,
-            },
-          });
-        } catch (error) {
-          console.error('Error assigning therapist:', error);
-          // Don't fail the whole operation if therapist assignment fails
-          toast.warning('Client created but therapist assignment failed');
-        }
-      }
-
-      // Step 3: Assign/Create parent
-      if (data.parentAction !== 'skip') {
-        try {
-          if (data.parentAction === 'existing' && data.existingParentId) {
-            // Link existing parent
-            await api.adminClientParents.create4({
-              clientId,
-              requestBody: {
-                parentId: data.existingParentId,
-                relationship: 'Parent', // Default, can be updated later
-                primary: data.isPrimaryParent,
-              },
-            });
-          } else if (data.parentAction === 'new') {
-            // Create new parent
-            await api.adminClientParents.create4({
-              clientId,
-              requestBody: {
-                fullName: data.newParentFullName,
-                email: data.newParentEmail || undefined,
-                phone: data.newParentPhone || undefined,
-                relationship: data.newParentRelationship,
-                primary: data.isPrimaryParent,
-              },
-            });
-          }
-        } catch (error) {
-          console.error('Error assigning/creating parent:', error);
-          // Don't fail the whole operation if parent assignment fails
-          toast.warning('Client created but parent assignment failed');
-        }
-      }
-
-      toast.success('Client created successfully!');
-      form.reset();
-      setCurrentStep(1);
-      onOpenChange(false);
-      onSuccess?.();
-    } catch (error) {
-      handleApiError(error);
-      toast.error('Failed to create client');
-    } finally {
-      setIsSubmitting(false);
+    const values = form.getValues();
+    if (!values.therapyTypes || values.therapyTypes.length === 0) {
+      toast.error('Please select at least one therapy type');
+      return;
     }
-  };
-
-  const toggleTherapyType = (type: 'aba' | 'speech' | 'ot') => {
-    const current = therapyTypes || [];
-    if (current.includes(type)) {
-      form.setValue('therapyTypes', current.filter(t => t !== type));
-    } else {
-      form.setValue('therapyTypes', [...current, type]);
-    }
+    await onSubmit(values);
   };
 
   const renderStepContent = () => {
@@ -368,7 +228,7 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
         return (
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-900">Basic Information</h3>
-            
+
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
@@ -418,10 +278,7 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
                     <Popover open={dobOpen} onOpenChange={setDobOpen}>
                       <FormControl>
                         <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-left font-normal"
-                          >
+                          <Button variant="outline" className="w-full justify-start text-left font-normal">
                             {field.value ? (
                               formatDate(field.value)
                             ) : (
@@ -435,6 +292,10 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
                         <Calendar
                           mode="single"
                           selected={field.value}
+                          captionLayout="dropdown"
+                          fromYear={currentYear - 30}
+                          toYear={currentYear}
+                          defaultMonth={field.value ?? new Date(currentYear - 5, 0, 1)}
                           onSelect={(date) => {
                             field.onChange(date);
                             setDobOpen(false);
@@ -445,9 +306,7 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
                       </PopoverContent>
                     </Popover>
                     {dateOfBirth && (
-                      <FormDescription>
-                        Age: {calculateAge(dateOfBirth)} years old
-                      </FormDescription>
+                      <FormDescription>Age: {calculateAge(dateOfBirth)} years old</FormDescription>
                     )}
                     <FormMessage />
                   </FormItem>
@@ -466,10 +325,7 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
                     <Popover open={therapyStartOpen} onOpenChange={setTherapyStartOpen}>
                       <FormControl>
                         <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-left font-normal"
-                          >
+                          <Button variant="outline" className="w-full justify-start text-left font-normal">
                             {field.value ? (
                               formatDate(field.value)
                             ) : (
@@ -483,6 +339,10 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
                         <Calendar
                           mode="single"
                           selected={field.value}
+                          captionLayout="dropdown"
+                          fromYear={currentYear - 10}
+                          toYear={currentYear + 1}
+                          defaultMonth={field.value ?? new Date()}
                           onSelect={(date) => {
                             field.onChange(date);
                             setTherapyStartOpen(false);
@@ -532,9 +392,7 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
                     <FormControl>
                       <Input placeholder="https://example.com/photo.jpg" {...field} />
                     </FormControl>
-                    <FormDescription>
-                      URL to the client&apos;s profile photo
-                    </FormDescription>
+                    <FormDescription>URL to the client&apos;s profile photo</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -551,23 +409,23 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
             </h3>
             <p className="text-sm text-slate-600">Select all therapy types this client will receive</p>
             <div className="flex flex-wrap gap-4">
-              {(['aba', 'speech', 'ot'] as const).map(type => (
+              {(['aba', 'speech', 'ot'] as const).map((type) => (
                 <div key={type} className="flex items-center space-x-2">
                   <Checkbox
-                    id={type}
-                    checked={therapyTypes?.includes(type)}
+                    id={`therapy-${type}`}
+                    checked={therapyTypesValue?.includes(type)}
                     onCheckedChange={() => toggleTherapyType(type)}
                   />
                   <label
-                    htmlFor={type}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    htmlFor={`therapy-${type}`}
+                    className="text-sm font-medium leading-none cursor-pointer"
                   >
                     {THERAPY_LABELS[type]}
                   </label>
                 </div>
               ))}
             </div>
-            {therapyTypes.length === 0 && (
+            {therapyTypesValue.length === 0 && (
               <p className="text-sm text-red-500">Please select at least one therapy type</p>
             )}
           </div>
@@ -577,43 +435,35 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
         return (
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-900">Therapist Assignment</h3>
-            <p className="text-sm text-slate-600">Assign a primary therapist (optional - can be done later)</p>
+            <p className="text-sm text-slate-600">Assign a primary therapist (optional)</p>
             <FormField
               control={form.control}
               name="therapistId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Primary Therapist</FormLabel>
-                  <Select 
-                    onValueChange={(value) => field.onChange(value === 'skip' ? '' : value)} 
-                    value={field.value || undefined}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value || undefined}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select therapist (optional)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {loading ? (
-                        <div className="px-2 py-1.5 text-sm text-slate-500">Loading...</div>
-                      ) : therapists.length === 0 ? (
+                      {therapists.length === 0 ? (
                         <div className="px-2 py-1.5 text-sm text-slate-500">No therapists available</div>
                       ) : (
-                        <>
-                          {therapists.map(therapist => (
-                            therapist.id && (
-                              <SelectItem key={therapist.id} value={therapist.id}>
-                                {therapist.fullName || 'Unknown'}
+                        therapists.map(
+                          (t) =>
+                            t.id && (
+                              <SelectItem key={t.id} value={t.id}>
+                                {t.fullName || 'Unknown'}
                               </SelectItem>
-                            )
-                          ))}
-                        </>
+                            ),
+                        )
                       )}
                     </SelectContent>
                   </Select>
-                  <FormDescription>
-                    You can assign a therapist later if needed. Leave empty to skip.
-                  </FormDescription>
+                  <FormDescription>Leave empty to assign later.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -626,7 +476,7 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-900">Parent/Caregiver</h3>
             <p className="text-sm text-slate-600">Assign an existing parent or create a new one</p>
-            
+
             <FormField
               control={form.control}
               name="parentAction"
@@ -665,18 +515,17 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {loading ? (
-                          <div className="px-2 py-1.5 text-sm text-slate-500">Loading...</div>
-                        ) : parents.length === 0 ? (
+                        {parents.length === 0 ? (
                           <div className="px-2 py-1.5 text-sm text-slate-500">No parents available</div>
                         ) : (
-                          parents.map(parent => (
-                            parent.id && (
-                              <SelectItem key={parent.id} value={parent.id}>
-                                {parent.fullName || 'Unknown'} {parent.relationship ? `(${parent.relationship})` : ''}
-                              </SelectItem>
-                            )
-                          ))
+                          parents.map(
+                            (p) =>
+                              p.id && (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.fullName || 'Unknown'}
+                                </SelectItem>
+                              ),
+                          )
                         )}
                       </SelectContent>
                     </Select>
@@ -770,14 +619,11 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
                       <FormItem className="flex flex-col justify-end">
                         <div className="flex items-center space-x-2 pt-2">
                           <Checkbox
-                            id="isPrimary"
+                            id="isPrimaryParent"
                             checked={field.value}
                             onCheckedChange={field.onChange}
                           />
-                          <label
-                            htmlFor="isPrimary"
-                            className="text-sm font-medium leading-none cursor-pointer"
-                          >
+                          <label htmlFor="isPrimaryParent" className="text-sm font-medium cursor-pointer">
                             Set as primary caregiver
                           </label>
                         </div>
@@ -802,95 +648,22 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
             <h3 className="text-sm font-semibold text-slate-900">Sensory Profile (Optional)</h3>
             <p className="text-sm text-slate-600">Enter sensory preferences and sensitivities</p>
             <div className="grid gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="visual"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Visual</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="e.g., Prefers dim lighting, avoids fluorescent"
-                        {...field}
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="auditory"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Auditory</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="e.g., Sensitive to sudden loud noises"
-                        {...field}
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="tactile"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tactile</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="e.g., Enjoys deep pressure, dislikes light touch"
-                        {...field}
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="vestibular"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Vestibular</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="e.g., Seeks movement, loves swinging"
-                        {...field}
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="proprioceptive"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Proprioceptive</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="e.g., Needs heavy work activities"
-                        {...field}
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {(['visual', 'auditory', 'tactile', 'vestibular', 'proprioceptive'] as const).map((key) => (
+                <FormField
+                  key={key}
+                  control={form.control}
+                  name={key}
+                  render={({ field }) => (
+                    <FormItem className={key === 'proprioceptive' ? 'md:col-span-2' : ''}>
+                      <FormLabel>{key.charAt(0).toUpperCase() + key.slice(1)}</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} rows={3} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
             </div>
           </div>
         );
@@ -899,8 +672,8 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
         return (
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-900">Preferences & Dislikes (Optional)</h3>
-            <p className="text-sm text-slate-600">Enter preferences and dislikes separated by commas</p>
-            
+            <p className="text-sm text-slate-600">Enter items separated by commas</p>
+
             <FormField
               control={form.control}
               name="preferences"
@@ -908,15 +681,9 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
                 <FormItem>
                   <FormLabel>Preferences</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="e.g., Dinosaurs, Building blocks, Drawing, Music"
-                      {...field}
-                      rows={3}
-                    />
+                    <Textarea {...field} rows={3} />
                   </FormControl>
-                  <FormDescription>
-                    Enter preferences separated by commas
-                  </FormDescription>
+                  <FormDescription>Comma-separated</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -929,15 +696,9 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
                 <FormItem>
                   <FormLabel>Dislikes / Triggers</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="e.g., Loud music, Crowded spaces, Unexpected transitions"
-                      {...field}
-                      rows={3}
-                    />
+                    <Textarea {...field} rows={3} />
                   </FormControl>
-                  <FormDescription>
-                    Enter dislikes or triggers separated by commas
-                  </FormDescription>
+                  <FormDescription>Comma-separated</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -949,8 +710,7 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
         return (
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-900">Communication Styles (Optional)</h3>
-            <p className="text-sm text-slate-600">You can add detailed communication styles later from the client profile</p>
-            
+            <p className="text-sm text-slate-600">You can add more details later.</p>
             <FormField
               control={form.control}
               name="communicationStyles"
@@ -958,15 +718,8 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
                 <FormItem>
                   <FormLabel>Communication Notes</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="e.g., Verbal (2-3 word phrases), Uses gestures, Picture cards for requests"
-                      {...field}
-                      rows={4}
-                    />
+                    <Textarea {...field} rows={4} />
                   </FormControl>
-                  <FormDescription>
-                    Enter communication styles or notes. This will be saved in the client notes.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -980,85 +733,64 @@ export function AddClientDialog({ open, onOpenChange, onSuccess }: AddClientDial
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Add New Client - Step {currentStep} of {TOTAL_STEPS}</DialogTitle>
-          <DialogDescription>
-            {currentStep === 1 && 'Enter basic client information'}
-            {currentStep === 2 && 'Select therapy types'}
-            {currentStep === 3 && 'Assign a therapist (optional)'}
-            {currentStep === 4 && 'Add parent/caregiver information'}
-            {currentStep === 5 && 'Enter sensory profile (optional)'}
-            {currentStep === 6 && 'Enter preferences and dislikes (optional)'}
-            {currentStep === 7 && 'Add communication styles (optional)'}
-          </DialogDescription>
-        </DialogHeader>
-
+    <Form {...form}>
+      <form className="space-y-6">
         {/* Progress Indicator */}
-        <div className="flex items-center gap-2 py-4">
+        <div className="flex items-center gap-2">
           {Array.from({ length: TOTAL_STEPS }).map((_, idx) => (
             <div
               key={idx}
-              className={`flex-1 h-2 rounded-full ${
-                idx + 1 <= currentStep
-                  ? 'bg-teal-600'
-                  : 'bg-slate-200'
-              }`}
+              className={`flex-1 h-2 rounded-full ${idx + 1 <= currentStep ? 'bg-teal-600' : 'bg-slate-200'}`}
             />
           ))}
         </div>
 
-        <Form {...form}>
-          <form className="space-y-6">
-            {renderStepContent()}
+        <div className="text-sm text-slate-600">
+          Step {currentStep} of {TOTAL_STEPS}
+        </div>
 
-            <DialogFooter className="gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={currentStep === 1 ? () => onOpenChange(false) : prevStep}
-                disabled={isSubmitting}
-              >
-                {currentStep === 1 ? 'Cancel' : (
-                  <>
-                    <ChevronLeft className="size-4 mr-1" />
-                    Previous
-                  </>
-                )}
-              </Button>
-              
-              {currentStep < TOTAL_STEPS ? (
-                <Button
-                  type="button"
-                  onClick={nextStep}
-                  className="bg-teal-600 hover:bg-teal-700"
-                  disabled={isSubmitting}
-                >
-                  Next
-                  <ChevronRight className="size-4 ml-1" />
-                </Button>
+        {renderStepContent()}
+
+        <div className="flex items-center justify-between gap-2 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={currentStep === 1 ? onCancel : prevStep}
+            disabled={isSubmitting}
+          >
+            {currentStep === 1 ? 'Cancel' : (
+              <>
+                <ChevronLeft className="size-4 mr-1" />
+                Previous
+              </>
+            )}
+          </Button>
+
+          {currentStep < TOTAL_STEPS ? (
+            <Button type="button" onClick={nextStep} className="bg-teal-600 hover:bg-teal-700" disabled={isSubmitting}>
+              Next <ChevronRight className="size-4 ml-1" />
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={submitFinal}
+              className="bg-teal-600 hover:bg-teal-700"
+              disabled={isSubmitting || therapyTypesValue.length === 0}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  Creating…
+                </>
               ) : (
-                <Button
-                  type="button"
-                  onClick={onSubmit}
-                  className="bg-teal-600 hover:bg-teal-700"
-                  disabled={isSubmitting || therapyTypes.length === 0}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="size-4 mr-2 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Client'
-                  )}
-                </Button>
+                'Create Client'
               )}
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+            </Button>
+          )}
+        </div>
+      </form>
+    </Form>
   );
 }
+
+

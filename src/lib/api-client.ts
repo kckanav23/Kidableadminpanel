@@ -12,6 +12,7 @@ import { ApiClient } from './generated';
 import { getAccessCode, clearAccessCode } from './api';
 
 const API_BASE_URL = 'https://backend.kidable.in';
+// const API_BASE_URL = 'http://localhost:40417';
 
 // Singleton API client instance
 let apiClientInstance: ApiClient | null = null;

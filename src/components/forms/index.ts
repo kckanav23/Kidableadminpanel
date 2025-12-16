@@ -26,3 +26,17 @@ export type { StrategyFormData } from './StrategyForm';
 
 export { ResourceForm } from './ResourceForm';
 export type { ResourceFormData } from './ResourceForm';
+
+// Team tab forms
+export { TeamTherapistAssignForm } from './TeamTherapistAssignForm';
+export type { TeamTherapistAssignData } from './TeamTherapistAssignForm';
+
+export { TeamParentForm } from './TeamParentForm';
+export type { TeamParentData } from './TeamParentForm';
+
+export { TeamParentEditForm } from './TeamParentEditForm';
+export type { TeamParentEditData } from './TeamParentEditForm';
+
+// Client onboarding
+export { AddClientForm } from './AddClientForm';
+export type { AddClientFormData } from './AddClientForm';

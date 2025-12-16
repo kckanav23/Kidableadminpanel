@@ -3,7 +3,7 @@
 # Script to generate TypeScript types and API client from OpenAPI spec
 # Usage: ./scripts/generate-api.sh
 
-API_URL="https://parent.kidable.in/api/v3/api-docs"
+API_URL="http://localhost:40417/v3/api-docs"
 OUTPUT_DIR="src/lib/generated"
 
 echo "🚀 Generating API client from OpenAPI spec..."

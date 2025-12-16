@@ -55,6 +55,9 @@ export type { PageResponseParentResponse } from './models/PageResponseParentResp
 export type { PageResponseResourceLibraryResponse } from './models/PageResponseResourceLibraryResponse';
 export type { PageResponseStrategyLibraryResponse } from './models/PageResponseStrategyLibraryResponse';
 export type { PageResponseTherapistResponse } from './models/PageResponseTherapistResponse';
+export type { ParentAccessCodeCreateRequest } from './models/ParentAccessCodeCreateRequest';
+export type { ParentAccessCodeResponse } from './models/ParentAccessCodeResponse';
+export type { ParentAccessCodeUpdateRequest } from './models/ParentAccessCodeUpdateRequest';
 export { ParentResponse } from './models/ParentResponse';
 export type { ParentSummary } from './models/ParentSummary';
 export type { RelatedGoalResponse } from './models/RelatedGoalResponse';
@@ -99,6 +102,7 @@ export { AdminClientTherapistsService } from './services/AdminClientTherapistsSe
 export { AdminGoalProgressService } from './services/AdminGoalProgressService';
 export { AdminGoalsService } from './services/AdminGoalsService';
 export { AdminHomeworkService } from './services/AdminHomeworkService';
+export { AdminParentAccessCodesService } from './services/AdminParentAccessCodesService';
 export { AdminParentsService } from './services/AdminParentsService';
 export { AdminResourceLibraryService } from './services/AdminResourceLibraryService';
 export { AdminSessionActivitiesService } from './services/AdminSessionActivitiesService';

@@ -224,6 +224,65 @@ import { ResourceForm, ResourceFormData } from '../forms';
 />
 ```
 
+### 9. **Team Forms** - Assign Therapists / Parents
+Used on the Client detail “Team” tab to manage therapist and parent relationships.
+
+**Available forms:**
+- `TeamTherapistAssignForm` - Assign a therapist (optional primary flag)
+- `TeamParentForm` - Link existing parent OR create a new parent inline (relationship + primary flag)
+- `TeamParentEditForm` - Edit parent contact details + relationship + primary flag
+
+**Usage:**
+```tsx
+import { FormDialog, TeamTherapistAssignForm, type TeamTherapistAssignData } from '../forms';
+
+const [open, setOpen] = useState(false);
+
+const handleSubmit = async (data: TeamTherapistAssignData) => {
+  // API call here
+  console.log(data);
+  setOpen(false);
+};
+
+<FormDialog open={open} onOpenChange={setOpen} title="Add Therapist">
+  <TeamTherapistAssignForm
+    therapists={therapists}
+    assignedTherapistIds={assignedIds}
+    onSubmit={handleSubmit}
+    onCancel={() => setOpen(false)}
+  />
+</FormDialog>
+```
+
+### 10. **AddClientForm** - Client Onboarding (Multi-step)
+Multi-step onboarding used on the Clients page to create a client and optionally assign therapist/parent.
+
+**Usage:**
+```tsx
+import { FormDialog, AddClientForm, type AddClientFormData } from '../forms';
+
+const [open, setOpen] = useState(false);
+
+const handleSubmit = async (data: AddClientFormData) => {
+  // API calls:
+  // 1) create client
+  // 2) (optional) assign therapist
+  // 3) (optional) link/create parent
+  console.log(data);
+  setOpen(false);
+};
+
+<FormDialog open={open} onOpenChange={setOpen} title="Add Client" maxWidth="3xl">
+  <AddClientForm
+    therapists={therapists}
+    parents={parents}
+    isSubmitting={isSubmitting}
+    onSubmit={handleSubmit}
+    onCancel={() => setOpen(false)}
+  />
+</FormDialog>
+```
+
 ## Utility Components
 
 ### FormDialog

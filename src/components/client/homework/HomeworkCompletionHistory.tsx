@@ -1,3 +1,4 @@
+import React from 'react';
 import { HomeworkCompletion } from '../../../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Badge } from '../../ui/badge';
@@ -208,12 +209,26 @@ export function HomeworkCompletionHistory({ homework, onClose }: HomeworkComplet
           </CardHeader>
           <CardContent>
             <ol className="space-y-2">
-              {homework.instructions.split('\n').filter(Boolean).map((instruction, index) => (
-                <li key={index} className="flex gap-2">
-                  <span className="text-slate-600">{index + 1}.</span>
-                  <span>{instruction}</span>
-                </li>
-              ))}
+              {homework.instructions && Array.isArray(homework.instructions)
+                ? homework.instructions
+                    .filter(Boolean)
+                    .map((instruction, index) => (
+                      <li key={index} className="flex gap-2">
+                        <span className="text-slate-600">{index + 1}.</span>
+                        <span>{instruction}</span>
+                      </li>
+                    ))
+                : homework.instructions && typeof homework.instructions === 'string'
+                  ? (homework.instructions as string)
+                      .split('\n')
+                      .filter(Boolean)
+                      .map((instruction, index) => (
+                        <li key={index} className="flex gap-2">
+                          <span className="text-slate-600">{index + 1}.</span>
+                          <span>{instruction}</span>
+                        </li>
+                      ))
+                  : null}
             </ol>
           </CardContent>
         </Card>

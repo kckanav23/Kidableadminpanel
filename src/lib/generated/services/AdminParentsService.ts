@@ -14,7 +14,7 @@ export class AdminParentsService {
      * @returns PageResponseParentResponse OK
      * @throws ApiError
      */
-    public list6({
+    public list7({
         status,
         q,
         page,
