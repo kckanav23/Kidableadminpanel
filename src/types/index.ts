@@ -49,6 +49,7 @@ export interface Goal {
   clientId: string;
   title: string;
   description: string;
+  targetCriteria?: string;
   therapyType: TherapyType;
   baseline: number;
   target: number;

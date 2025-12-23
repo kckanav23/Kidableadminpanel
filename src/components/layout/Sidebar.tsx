@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
+  ClipboardList,
   BookOpen, 
   FolderOpen, 
   UserCog, 
@@ -12,7 +13,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '@/features/auth';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import HeroSectionPurple from '../graphics/HeroSectionPurple';
@@ -41,6 +42,7 @@ export function Sidebar() {
       items: [
         { label: 'Dashboard', path: '/', icon: <LayoutDashboard className="size-5" /> },
         { label: 'Clients', path: '/clients', icon: <Users className="size-5" /> },
+        { label: 'Sessions', path: '/sessions', icon: <ClipboardList className="size-5" /> },
       ],
     },
     {

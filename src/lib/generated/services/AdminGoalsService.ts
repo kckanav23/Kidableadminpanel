@@ -3,12 +3,61 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { GoalCreateRequest } from '../models/GoalCreateRequest';
+import type { GoalProgressCreateRequest } from '../models/GoalProgressCreateRequest';
+import type { GoalProgressResponse } from '../models/GoalProgressResponse';
+import type { GoalProgressUpdateRequest } from '../models/GoalProgressUpdateRequest';
 import type { GoalResponse } from '../models/GoalResponse';
 import type { GoalUpdateRequest } from '../models/GoalUpdateRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class AdminGoalsService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
+    /**
+     * Update goal progress (staff scoped)
+     * @returns GoalProgressResponse OK
+     * @throws ApiError
+     */
+    public updateProgress({
+        goalId,
+        progressId,
+        requestBody,
+    }: {
+        goalId: string,
+        progressId: string,
+        requestBody: GoalProgressUpdateRequest,
+    }): CancelablePromise<GoalProgressResponse> {
+        return this.httpRequest.request({
+            method: 'PUT',
+            url: '/admin/clients/{clientId}/goals/{goalId}/progress/{progressId}',
+            path: {
+                'goalId': goalId,
+                'progressId': progressId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Delete goal progress (staff scoped)
+     * @returns any OK
+     * @throws ApiError
+     */
+    public deleteProgress({
+        goalId,
+        progressId,
+    }: {
+        goalId: string,
+        progressId: string,
+    }): CancelablePromise<any> {
+        return this.httpRequest.request({
+            method: 'DELETE',
+            url: '/admin/clients/{clientId}/goals/{goalId}/progress/{progressId}',
+            path: {
+                'goalId': goalId,
+                'progressId': progressId,
+            },
+        });
+    }
     /**
      * List goals (staff scoped)
      * @returns GoalResponse OK
@@ -49,6 +98,28 @@ export class AdminGoalsService {
             url: '/admin/clients/{clientId}/goals',
             path: {
                 'clientId': clientId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Add goal progress (staff scoped)
+     * @returns GoalProgressResponse OK
+     * @throws ApiError
+     */
+    public addProgress({
+        goalId,
+        requestBody,
+    }: {
+        goalId: string,
+        requestBody: GoalProgressCreateRequest,
+    }): CancelablePromise<GoalProgressResponse> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/admin/clients/{clientId}/goals/{goalId}/progress',
+            path: {
+                'goalId': goalId,
             },
             body: requestBody,
             mediaType: 'application/json',

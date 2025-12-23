@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { SessionActivityUpdateRequest } from './SessionActivityUpdateRequest';
 export type SessionUpdateRequest = {
     sessionNumber?: number;
     sessionDate?: string;
@@ -9,6 +10,7 @@ export type SessionUpdateRequest = {
     longTermObjective?: string;
     shortTermObjective?: string;
     zone?: SessionUpdateRequest.zone;
+    sessionActivities?: Array<SessionActivityUpdateRequest>;
     sessionTags?: Array<string>;
     successes?: Array<string>;
     struggles?: Array<string>;

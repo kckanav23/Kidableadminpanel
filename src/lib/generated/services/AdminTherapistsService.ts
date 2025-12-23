@@ -98,7 +98,7 @@ export class AdminTherapistsService {
      * @returns TherapistResponse OK
      * @throws ApiError
      */
-    public update1({
+    public update({
         therapistId,
         requestBody,
     }: {

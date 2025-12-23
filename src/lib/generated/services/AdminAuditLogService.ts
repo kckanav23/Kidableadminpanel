@@ -14,7 +14,7 @@ export class AdminAuditLogService {
      * @returns PageResponseAuditLogResponse OK
      * @throws ApiError
      */
-    public list8({
+    public list7({
         resourceType,
         userId,
         from,

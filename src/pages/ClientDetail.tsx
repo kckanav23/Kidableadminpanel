@@ -1,55 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { formatDate } from '../lib/utils';
-import { ClientAvatar } from '../components/client/ClientAvatar';
-import { TherapyBadge } from '../components/badges/TherapyBadge';
-import { Button } from '../components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { ChevronLeft, MoreVertical, Loader2 } from 'lucide-react';
-import { ClientProfile } from '../components/client/ClientProfile';
-import { ClientGoals } from '../components/client/ClientGoals';
-import { ClientSessions } from '../components/client/ClientSessions';
-import { ClientHomework } from '../components/client/ClientHomework';
-import { ClientResources } from '../components/client/ClientResources';
-import { ClientStrategies } from '../components/client/ClientStrategies';
-import { ClientMoodJournal } from '../components/client/ClientMoodJournal';
-import { ClientTeam } from '../components/client/ClientTeam';
-import { getApiClient, handleApiError } from '../lib/api-client';
-import type { ClientProfile as ClientProfileType } from '../types/api';
-import { toast } from 'sonner';
+import React, { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ChevronLeft, Loader2, MoreVertical } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { TherapyBadge } from '@/components/badges/TherapyBadge';
+import { useAuth } from '@/features/auth';
+import { ClientAvatar, ClientDetailTabs, useClient, useDeleteClient } from '@/features/clients';
+import { formatDate } from '@/lib/utils';
 
 export function ClientDetail() {
   const { clientId } = useParams<{ clientId: string }>();
-  const [activeTab, setActiveTab] = useState('profile');
-  const [client, setClient] = useState<ClientProfileType | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.admin === true;
 
-  // Fetch client profile from API
-  useEffect(() => {
-    if (!clientId) return;
+  const clientQuery = useClient(clientId);
+  const client = clientQuery.data;
+  const deleteClient = useDeleteClient();
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-    const fetchClient = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const api = getApiClient();
-        const response = await api.adminClients.getClient({ clientId });
-        setClient(response);
-      } catch (err) {
-        console.error('Error fetching client:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load client';
-        setError(errorMessage);
-        toast.error(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchClient();
-  }, [clientId]);
-
-  if (loading) {
+  if (clientQuery.isLoading) {
     return (
       <div className="text-center py-12">
         <Loader2 className="size-6 animate-spin text-[#0B5B45] mx-auto" />
@@ -58,10 +46,10 @@ export function ClientDetail() {
     );
   }
 
-  if (error || !client) {
+  if (clientQuery.isError || !client) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-600 mb-4">{error || 'Client not found'}</p>
+        <p className="text-slate-600 mb-4">{clientQuery.error instanceof Error ? clientQuery.error.message : 'Client not found'}</p>
         <Link to="/clients">
           <Button variant="outline" className="mt-4">Back to Clients</Button>
         </Link>
@@ -72,10 +60,19 @@ export function ClientDetail() {
   const fullName = `${client.firstName} ${client.lastName}`;
   const dobDate = client.dateOfBirth ? formatDate(new Date(client.dateOfBirth)) : 'N/A';
   
-  // Find primary parent from clientParents array
-  const primaryParent = client.clientParents?.find(p => p.isPrimary)?.parents;
+  // Relationships may not be reflected in the generated `ClientProfileResponse` type yet.
+  // Keep this defensive so the page doesn't break if/when backend shape changes.
+  const primaryParentRelation = (client as any)?.clientParents?.find((p: any) => p?.isPrimary);
+  const primaryParent = primaryParentRelation?.parents;
   const primaryParentName = primaryParent?.fullName || 'Not assigned';
-  const primaryParentRelationship = client.clientParents?.find(p => p.isPrimary)?.relationship || '';
+  const primaryParentRelationship = primaryParentRelation?.relationship || '';
+
+  const handleConfirmDelete = async () => {
+    if (!clientId) return;
+    await deleteClient.mutateAsync(clientId);
+    setIsDeleteOpen(false);
+    navigate('/clients');
+  };
 
   return (
     <div className="space-y-6">
@@ -105,9 +102,43 @@ export function ClientDetail() {
               </div>
             </div>
           </div>
-          <Button variant="ghost" size="icon">
-            <MoreVertical className="size-5" />
-          </Button>
+          {isAdmin ? (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Client actions">
+                    <MoreVertical className="size-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => setIsDeleteOpen(true)}>
+                    Delete client
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete client?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will delete <span className="font-medium">{fullName}</span> and remove them from the system. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deleteClient.isPending}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction asChild>
+                      <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleteClient.isPending}>
+                        {deleteClient.isPending ? 'Deleting…' : 'Delete'}
+                      </Button>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          ) : null}
         </div>
 
         {primaryParent && (
@@ -122,93 +153,7 @@ export function ClientDetail() {
         )}
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="bg-white rounded-lg border overflow-x-auto">
-          <TabsList className="w-full justify-start rounded-none h-auto p-0 bg-transparent border-b">
-            <TabsTrigger
-              value="profile"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent"
-            >
-              Profile
-            </TabsTrigger>
-            <TabsTrigger
-              value="goals"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent"
-            >
-              Goals
-            </TabsTrigger>
-            <TabsTrigger
-              value="sessions"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent"
-            >
-              Sessions
-            </TabsTrigger>
-            <TabsTrigger
-              value="homework"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent"
-            >
-              Homework
-            </TabsTrigger>
-            <TabsTrigger
-              value="resources"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent"
-            >
-              Resources
-            </TabsTrigger>
-            <TabsTrigger
-              value="strategies"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent"
-            >
-              Strategies
-            </TabsTrigger>
-            <TabsTrigger
-              value="mood"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent"
-            >
-              Mood & Journal
-            </TabsTrigger>
-            <TabsTrigger
-              value="team"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent"
-            >
-              Team
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="profile" className="mt-0">
-          <ClientProfile client={client} />
-        </TabsContent>
-
-        <TabsContent value="goals" className="mt-0">
-          <ClientGoals clientId={client.id} />
-        </TabsContent>
-
-        <TabsContent value="sessions" className="mt-0">
-          <ClientSessions clientId={client.id} />
-        </TabsContent>
-
-        <TabsContent value="homework" className="mt-0">
-          <ClientHomework clientId={client.id} />
-        </TabsContent>
-
-        <TabsContent value="resources" className="mt-0">
-          <ClientResources clientId={client.id} />
-        </TabsContent>
-
-        <TabsContent value="strategies" className="mt-0">
-          <ClientStrategies clientId={client.id} />
-        </TabsContent>
-
-        <TabsContent value="mood" className="mt-0">
-          <ClientMoodJournal clientId={client.id} />
-        </TabsContent>
-
-        <TabsContent value="team" className="mt-0">
-          <ClientTeam client={client} />
-        </TabsContent>
-      </Tabs>
+      <ClientDetailTabs client={client as any} />
     </div>
   );
 }

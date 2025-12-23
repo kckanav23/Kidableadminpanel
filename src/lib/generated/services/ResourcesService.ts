@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ResourceResponse } from '../models/ResourceResponse';
+import type { ResourceLibraryResponse } from '../models/ResourceLibraryResponse';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class ResourcesService {
@@ -10,19 +10,24 @@ export class ResourcesService {
     /**
      * List resources
      * Returns client-specific resources plus global resources.
-     * @returns ResourceResponse OK
+     * @returns ResourceLibraryResponse OK
      * @throws ApiError
      */
     public getResources({
         clientId,
+        scope = 'all',
     }: {
         clientId: string,
-    }): CancelablePromise<Array<ResourceResponse>> {
+        scope?: string,
+    }): CancelablePromise<Array<ResourceLibraryResponse>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/client/{clientId}/resources',
             path: {
                 'clientId': clientId,
+            },
+            query: {
+                'scope': scope,
             },
         });
     }

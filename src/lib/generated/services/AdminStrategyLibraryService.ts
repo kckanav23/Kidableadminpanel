@@ -2,9 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { PageResponseStrategyLibraryResponse } from '../models/PageResponseStrategyLibraryResponse';
+import type { PageResponseStrategyResponse } from '../models/PageResponseStrategyResponse';
+import type { StrategiesByTypeResponse } from '../models/StrategiesByTypeResponse';
+import type { StrategyAssigntoClientRequest } from '../models/StrategyAssigntoClientRequest';
 import type { StrategyCreateRequest } from '../models/StrategyCreateRequest';
-import type { StrategyLibraryResponse } from '../models/StrategyLibraryResponse';
+import type { StrategyResponse } from '../models/StrategyResponse';
 import type { StrategyUpdateRequest } from '../models/StrategyUpdateRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -13,7 +15,7 @@ export class AdminStrategyLibraryService {
     /**
      * List strategies in library
      * Browse all strategies. Filter by type, global flag, or search term.
-     * @returns PageResponseStrategyLibraryResponse OK
+     * @returns PageResponseStrategyResponse OK
      * @throws ApiError
      */
     public list1({
@@ -28,7 +30,7 @@ export class AdminStrategyLibraryService {
         q?: string,
         page?: number,
         size?: number,
-    }): CancelablePromise<PageResponseStrategyLibraryResponse> {
+    }): CancelablePromise<PageResponseStrategyResponse> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/admin/strategies',
@@ -44,14 +46,14 @@ export class AdminStrategyLibraryService {
     /**
      * Create strategy
      * Add a new strategy to the library
-     * @returns StrategyLibraryResponse Created
+     * @returns StrategyResponse Created
      * @throws ApiError
      */
     public create1({
         requestBody,
     }: {
         requestBody: StrategyCreateRequest,
-    }): CancelablePromise<StrategyLibraryResponse> {
+    }): CancelablePromise<StrategyResponse> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/admin/strategies',
@@ -60,15 +62,37 @@ export class AdminStrategyLibraryService {
         });
     }
     /**
+     * Assign strategy to client (staff scoped)
+     * @returns StrategyResponse OK
+     * @throws ApiError
+     */
+    public assign1({
+        clientId,
+        requestBody,
+    }: {
+        clientId: string,
+        requestBody: StrategyAssigntoClientRequest,
+    }): CancelablePromise<StrategyResponse> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/admin/clients/{clientId}/strategies/',
+            path: {
+                'clientId': clientId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
      * Get strategy details
-     * @returns StrategyLibraryResponse OK
+     * @returns StrategyResponse OK
      * @throws ApiError
      */
     public get1({
         strategyId,
     }: {
         strategyId: string,
-    }): CancelablePromise<StrategyLibraryResponse> {
+    }): CancelablePromise<StrategyResponse> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/admin/strategies/{strategyId}',
@@ -83,7 +107,7 @@ export class AdminStrategyLibraryService {
      * @returns void
      * @throws ApiError
      */
-    public delete1({
+    public delete({
         strategyId,
     }: {
         strategyId: string,
@@ -98,16 +122,16 @@ export class AdminStrategyLibraryService {
     }
     /**
      * Update strategy
-     * @returns StrategyLibraryResponse OK
+     * @returns StrategyResponse OK
      * @throws ApiError
      */
-    public update2({
+    public update1({
         strategyId,
         requestBody,
     }: {
         strategyId: string,
         requestBody: StrategyUpdateRequest,
-    }): CancelablePromise<StrategyLibraryResponse> {
+    }): CancelablePromise<StrategyResponse> {
         return this.httpRequest.request({
             method: 'PATCH',
             url: '/admin/strategies/{strategyId}',
@@ -116,6 +140,73 @@ export class AdminStrategyLibraryService {
             },
             body: requestBody,
             mediaType: 'application/json',
+        });
+    }
+    /**
+     * Get strategies by type (staff scoped)
+     * @returns StrategyResponse OK
+     * @throws ApiError
+     */
+    public getByType1({
+        type,
+        scope = 'all',
+    }: {
+        type: string,
+        scope?: string,
+    }): CancelablePromise<Array<StrategyResponse>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/admin/strategies/{type}',
+            path: {
+                'type': type,
+            },
+            query: {
+                'scope': scope,
+            },
+        });
+    }
+    /**
+     * Get all strategies grouped (staff scoped)
+     * @returns StrategiesByTypeResponse OK
+     * @throws ApiError
+     */
+    public getAll1({
+        clientId,
+        scope = 'all',
+    }: {
+        clientId: string,
+        scope?: string,
+    }): CancelablePromise<StrategiesByTypeResponse> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/admin/clients/{clientId}/strategies',
+            path: {
+                'clientId': clientId,
+            },
+            query: {
+                'scope': scope,
+            },
+        });
+    }
+    /**
+     * Unassign strategy from client (staff scoped)
+     * @returns any OK
+     * @throws ApiError
+     */
+    public unassign({
+        clientId,
+        strategyId,
+    }: {
+        clientId: string,
+        strategyId: string,
+    }): CancelablePromise<any> {
+        return this.httpRequest.request({
+            method: 'DELETE',
+            url: '/admin/{clientId}/strategies/{strategyId}',
+            path: {
+                'clientId': clientId,
+                'strategyId': strategyId,
+            },
         });
     }
 }

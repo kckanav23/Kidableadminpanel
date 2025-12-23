@@ -2,68 +2,77 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+/**
+ * Strategy library entry
+ */
 export type StrategyResponse = {
     /**
-     * Strategy id
+     * Strategy ID
      */
     id?: string;
     /**
-     * Title
+     * Strategy title
      */
     title?: string;
     /**
-     * Description
+     * Strategy description
      */
     description?: string;
     /**
-     * Type
+     * Strategy type
      */
     type?: StrategyResponse.type;
     /**
-     * When to use
+     * When to use this strategy
      */
     whenToUse?: string;
     /**
-     * How to use
+     * How to use this strategy
      */
     howToUse?: string;
     /**
-     * Steps
+     * Implementation steps
      */
     steps?: Array<string>;
     /**
-     * Examples
+     * Usage examples
      */
     examples?: Array<string>;
     /**
-     * Is global
+     * Target zone for this strategy
      */
-    isGlobal?: boolean;
+    targetZone?: StrategyResponse.targetZone;
     /**
-     * Effectiveness rating
+     * Whether this is a global strategy
      */
-    effectiveness?: string;
+    global?: boolean;
     /**
-     * Custom notes for client
+     * Creation timestamp
      */
-    customNotes?: string;
+    createdAt?: string;
     /**
-     * Custom examples for client
+     * Last update timestamp
      */
-    customExamples?: Array<string>;
-    /**
-     * Assigned date
-     */
-    assignedDate?: string;
+    updatedAt?: string;
 };
 export namespace StrategyResponse {
     /**
-     * Type
+     * Strategy type
      */
     export enum type {
         ANTECEDENT = 'antecedent',
         REINFORCEMENT = 'reinforcement',
         REGULATION = 'regulation',
+    }
+    /**
+     * Target zone for this strategy
+     */
+    export enum targetZone {
+        GREEN = 'green',
+        YELLOW = 'yellow',
+        ORANGE = 'orange',
+        RED = 'red',
+        BLUE = 'blue',
     }
 }
 

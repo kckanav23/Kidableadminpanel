@@ -53,7 +53,7 @@ export class AdminClientTherapistsService {
      * @returns any OK
      * @throws ApiError
      */
-    public unassign({
+    public unassign1({
         clientId,
         therapistId,
     }: {

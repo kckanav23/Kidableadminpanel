@@ -1,41 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { getGreeting, formatDate, calculateAge } from '../lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { ClientAvatar } from '../components/client/ClientAvatar';
-import { TherapyBadge } from '../components/badges/TherapyBadge';
-import { Badge } from '../components/ui/badge';
-import { Progress } from '../components/ui/progress';
+import { useAuth } from '@/features/auth';
+import { StatsCards, useDashboardData } from '@/features/dashboard';
+import { getGreeting, formatDate, calculateAge } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ClientAvatar } from '@/features/clients';
+import { TherapyBadge } from '@/components/badges/TherapyBadge';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { Plus, ArrowRight, Calendar, Clock, CheckCircle2, TrendingUp, Activity, Users, Loader2, Search } from 'lucide-react';
-import { getApiClient, handleApiError } from '../lib/api-client';
+import { getApiClient, handleApiError } from '@/lib/api/client';
 import { toast } from 'sonner';
-import { Input } from '../components/ui/input';
-import type { ClientSummaryResponse, SessionResponse, HomeworkResponse, GoalResponse, AuditLogResponse, TherapistResponse, ParentResponse } from '../types/api';
-import { SessionCreateRequest, HomeworkCreateRequest } from '../types/api';
-import {
-  FormDialog,
-  SessionForm,
-  HomeworkForm,
-  AddClientForm,
-  type SessionFormData,
-  type HomeworkFormData,
-  type AddClientFormData,
-} from '../components/forms';
+import { Input } from '@/components/ui/input';
+import type { TherapistResponse, ParentResponse } from '@/types/api';
+import { SessionCreateRequest, HomeworkCreateRequest } from '@/types/api';
+import { FormDialog } from '@/components/common/FormDialog';
+import { SessionForm, type SessionFormData } from '@/features/clients/tabs/sessions/components/SessionForm';
+import { HomeworkForm, type HomeworkFormData } from '@/features/clients/tabs/homework/components/HomeworkForm';
+import { ClientForm as AddClientForm } from '@/features/clients/components/ClientForm';
+import type { ClientFormData as AddClientFormData } from '@/features/clients/clientForm';
+import { useCreateClient } from '@/features/clients';
+import { useCreateSession } from '@/features/clients/tabs/sessions/hooks/useCreateSession';
 
 export function Dashboard() {
   const { user } = useAuth();
   const today = new Date();
   const formattedDate = formatDate(today);
   
-  // State for all data
-  const [clients, setClients] = useState<ClientSummaryResponse[]>([]);
-  const [sessions, setSessions] = useState<SessionResponse[]>([]);
-  const [homework, setHomework] = useState<HomeworkResponse[]>([]);
-  const [goals, setGoals] = useState<GoalResponse[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLogResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dashboardQuery = useDashboardData({ role: user?.role, isAdmin: user?.admin });
+  const clients = dashboardQuery.data?.clients ?? [];
+  const sessions = dashboardQuery.data?.sessions ?? [];
+  const homework = dashboardQuery.data?.homework ?? [];
+  const goals = dashboardQuery.data?.goals ?? [];
+  const auditLogs = dashboardQuery.data?.auditLogs ?? [];
 
   // Dialog states
   const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
@@ -49,77 +47,14 @@ export function Dashboard() {
   const [therapists, setTherapists] = useState<TherapistResponse[]>([]);
   const [parents, setParents] = useState<ParentResponse[]>([]);
   const [picklistsLoading, setPicklistsLoading] = useState(false);
-  const [isCreatingClient, setIsCreatingClient] = useState(false);
+  const createClient = useCreateClient();
+  const isCreatingClient = createClient.isPending;
+
+  const createSession = useCreateSession(selectedClientId ?? '');
+  const isCreatingSession = createSession.isPending;
   
   // Available goals for homework
   const [availableGoals, setAvailableGoals] = useState<Array<{ id: string; title: string }>>([]);
-
-  // Fetch all dashboard data
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setLoading(true);
-      try {
-        const api = getApiClient();
-        
-        // Fetch clients first
-        const clientsData = await api.adminClients.listClients({ 
-          size: 100, 
-          mine: user?.role === 'THERAPIST' 
-        });
-        const clientsList = clientsData.items || [];
-        setClients(clientsList);
-
-        // Fetch audit logs (admin only)
-        if (user?.admin) {
-          try {
-            const auditLogsData = await api.adminAuditLog.list7({ size: 5 });
-            setAuditLogs(auditLogsData.items || []);
-          } catch (error) {
-            console.error('Error fetching audit logs:', error);
-          }
-        }
-
-        // Fetch sessions, homework, and goals for clients (limited to first 10 for performance)
-        if (clientsList.length > 0) {
-          const clientIds = clientsList.slice(0, 10).map(c => c.id).filter(Boolean) as string[];
-          
-          const [allSessions, allHomework, allGoals] = await Promise.all([
-            // Fetch sessions for each client
-            Promise.all(
-              clientIds.map(clientId =>
-                api.adminSessions.getSessions({ clientId, limit: 5 }).catch(() => [])
-              )
-            ).then(results => results.flat()),
-            
-            // Fetch homework for each client
-            Promise.all(
-              clientIds.map(clientId =>
-                api.adminHomework.getHomework({ clientId, active: true }).catch(() => [])
-              )
-            ).then(results => results.flat()),
-            
-            // Fetch goals for each client
-            Promise.all(
-              clientIds.map(clientId =>
-                api.adminGoals.getGoals({ clientId, status: 'active' }).catch(() => [])
-              )
-            ).then(results => results.flat()),
-          ]);
-
-          setSessions(allSessions);
-          setHomework(allHomework);
-          setGoals(allGoals);
-        }
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-        toast.error('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, [user?.role]);
 
   // Get next session number for a client
   const getNextSessionNumber = (clientId: string) => {
@@ -192,7 +127,6 @@ export function Dashboard() {
     if (!selectedClientId) return;
     
     try {
-      const api = getApiClient();
       const therapyMap: Record<string, SessionCreateRequest.therapy> = {
         'ABA': SessionCreateRequest.therapy.ABA,
         'Speech': SessionCreateRequest.therapy.SPEECH,
@@ -206,8 +140,7 @@ export function Dashboard() {
         'blue': SessionCreateRequest.zone.BLUE,
       };
 
-      await api.adminSessions.createSession({
-        clientId: selectedClientId,
+      await createSession.mutateAsync({
         requestBody: {
           sessionNumber: data.sessionNumber,
           sessionDate: data.sessionDate,
@@ -224,14 +157,13 @@ export function Dashboard() {
           discussionStatus: data.discussionStatus,
           additionalNotes: data.additionalNotes,
         },
+        activities: data.sessionActivities,
       });
-
-      toast.success('Session created successfully');
       setSessionDialogOpen(false);
       setSelectedClientId(null);
     } catch (error) {
       console.error('Error creating session:', error);
-      toast.error('Failed to create session');
+      // `useCreateSession` already toasts; avoid double messaging.
     }
   };
 
@@ -273,113 +205,15 @@ export function Dashboard() {
 
   // Handle create client
   const handleCreateClient = async (data: AddClientFormData) => {
-    if (isCreatingClient) return;
-    setIsCreatingClient(true);
     try {
-      if (!data.dateOfBirth || !data.therapyStartDate) {
-        toast.error('Date of birth and therapy start date are required');
-        return;
-      }
-      if (!data.therapyTypes || data.therapyTypes.length === 0) {
-        toast.error('Please select at least one therapy type');
-        return;
-      }
-
-      const api = getApiClient();
-      const clientResponse = await api.adminClients.createClient({
-        requestBody: {
-          firstName: data.firstName,
-          lastName: data.lastName,
-          dateOfBirth: data.dateOfBirth.toISOString().split('T')[0],
-          age: calculateAge(data.dateOfBirth),
-          photoUrl: data.photoUrl || undefined,
-          therapyStartDate: data.therapyStartDate.toISOString().split('T')[0],
-          therapies: data.therapyTypes.map((t): 'ABA' | 'Speech' | 'OT' => {
-            if (t === 'aba') return 'ABA';
-            if (t === 'speech') return 'Speech';
-            if (t === 'ot') return 'OT';
-            return 'ABA';
-          }),
-          status: data.status as any,
-          sensoryProfile:
-            data.visual || data.auditory || data.tactile || data.vestibular || data.proprioceptive
-              ? {
-                  ...(data.visual && { visual: data.visual }),
-                  ...(data.auditory && { auditory: data.auditory }),
-                  ...(data.tactile && { tactile: data.tactile }),
-                  ...(data.vestibular && { vestibular: data.vestibular }),
-                  ...(data.proprioceptive && { proprioceptive: data.proprioceptive }),
-                }
-              : undefined,
-          preferences: data.preferences
-            ? data.preferences.split(',').map((p) => p.trim()).filter(Boolean)
-            : undefined,
-          dislikes: data.dislikes ? data.dislikes.split(',').map((d) => d.trim()).filter(Boolean) : undefined,
-          notes: data.communicationStyles || undefined,
-        },
-      });
-
-      const clientId = clientResponse.id;
-      if (!clientId) throw new Error('Client ID not returned from API');
-
-      // Assign therapist if selected
-      if (data.therapistId) {
-        try {
-          await api.adminClientTherapists.assign({
-            clientId,
-            requestBody: { therapistId: data.therapistId, primary: true },
-          });
-        } catch (err) {
-          console.error(err);
-          toast.warning('Client created but therapist assignment failed');
-        }
-      }
-
-      // Assign parent if selected
-      if (data.parentAction !== 'skip') {
-        try {
-          if (data.parentAction === 'existing' && data.existingParentId) {
-            await api.adminClientParents.create4({
-              clientId,
-              requestBody: {
-                parentId: data.existingParentId,
-                relationship: 'Parent',
-                primary: data.isPrimaryParent,
-              },
-            });
-          } else if (data.parentAction === 'new') {
-            await api.adminClientParents.create4({
-              clientId,
-              requestBody: {
-                fullName: data.newParentFullName,
-                email: data.newParentEmail || undefined,
-                phone: data.newParentPhone || undefined,
-                relationship: data.newParentRelationship,
-                primary: data.isPrimaryParent,
-              },
-            });
-          }
-        } catch (err) {
-          console.error(err);
-          toast.warning('Client created but parent assignment failed');
-        }
-      }
-
-      toast.success('Client created successfully!');
+      await createClient.mutateAsync(data);
       setClientDialogOpen(false);
       
-      // Refresh clients list
-      const api2 = getApiClient();
-      const clientsData = await api2.adminClients.listClients({ 
-        size: 100, 
-        mine: user?.role === 'THERAPIST' 
-      });
-      setClients(clientsData.items || []);
+      // Refresh dashboard data (includes clients list)
+      await dashboardQuery.refetch();
     } catch (error) {
-      handleApiError(error);
-      toast.error('Failed to create client');
-    } finally {
-      setIsCreatingClient(false);
+      // `useCreateClient` already toasts; keep this silent to avoid double messaging.
+      console.error(error);
     }
   };
 
@@ -391,7 +225,7 @@ export function Dashboard() {
   });
 
   // Filter clients based on user role
-  const myClients = user?.role === 'THERAPIST'
+  const myClients = user?.role === 'therapist'
     ? clients // API already filters with mine=true
     : clients;
 
@@ -486,61 +320,16 @@ export function Dashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-[#0B5B45]">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm text-slate-600">
-                {user?.role === 'THERAPIST' ? 'My Clients' : 'Total Clients'}
-              </CardTitle>
-              <Users className="size-4 text-[#0B5B45]" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl mb-1">{myClients.length}</p>
-            <p className="text-xs text-slate-500">Active caseload</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-[#5B9FED]">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm text-slate-600">Sessions Today</CardTitle>
-              <Calendar className="size-4 text-[#5B9FED]" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl mb-1">{todaySessions.length}</p>
-            <p className="text-xs text-slate-500">{upcomingSessions.length} upcoming</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-[#F4D16B]">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm text-slate-600">Homework</CardTitle>
-              <CheckCircle2 className="size-4 text-[#F4D16B]" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl mb-1">{completedHomework.length}</p>
-            <p className="text-xs text-slate-500">{pendingHomework.length} pending</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-[#0B5B45]">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm text-slate-600">Avg Progress</CardTitle>
-              <TrendingUp className="size-4 text-[#0B5B45]" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl mb-1">{avgProgress}%</p>
-            <p className="text-xs text-slate-500">{activeGoals.length} active goals</p>
-          </CardContent>
-        </Card>
-      </div>
+      <StatsCards
+        isTherapist={user?.role === 'therapist'}
+        clientsCount={myClients.length}
+        sessionsTodayCount={todaySessions.length}
+        upcomingSessionsCount={upcomingSessions.length}
+        completedHomeworkCount={completedHomework.length}
+        pendingHomeworkCount={pendingHomework.length}
+        avgProgressPercent={avgProgress}
+        activeGoalsCount={activeGoals.length}
+      />
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -639,7 +428,7 @@ export function Dashboard() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle>
-            {user?.role === 'THERAPIST' ? 'MY CLIENTS' : 'ALL CLIENTS'}
+            {user?.role === 'therapist' ? 'MY CLIENTS' : 'ALL CLIENTS'}
           </CardTitle>
           <Link to="/clients">
             <Button variant="ghost" size="sm" className="gap-1">
