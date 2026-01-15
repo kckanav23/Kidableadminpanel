@@ -2,10 +2,6 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ClientParentResponse } from './ClientParentResponse';
-import type { CommunicationStyleResponse } from './CommunicationStyleResponse';
-import type { InitialGoalResponse } from './InitialGoalResponse';
-import type { SupportNetworkResponse } from './SupportNetworkResponse';
 /**
  * Client profile with relationships
  */
@@ -58,21 +54,5 @@ export type ClientProfileResponse = {
      * Initial assessment notes
      */
     initialAssessment?: string;
-    /**
-     * Communication styles
-     */
-    communicationStyles?: Array<CommunicationStyleResponse>;
-    /**
-     * Support network contacts
-     */
-    supportNetwork?: Array<SupportNetworkResponse>;
-    /**
-     * Initial goals from intake
-     */
-    initialGoals?: Array<InitialGoalResponse>;
-    /**
-     * Parent relationships
-     */
-    clientParents?: Array<ClientParentResponse>;
 };
 

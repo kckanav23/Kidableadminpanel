@@ -16,14 +16,19 @@ export class StrategiesService {
      */
     public getAll({
         clientId,
+        scope = 'all',
     }: {
         clientId: string,
+        scope?: string,
     }): CancelablePromise<StrategiesByTypeResponse> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/client/{clientId}/strategies',
             path: {
                 'clientId': clientId,
+            },
+            query: {
+                'scope': scope,
             },
         });
     }
@@ -36,9 +41,11 @@ export class StrategiesService {
     public getByType({
         clientId,
         type,
+        scope = 'all',
     }: {
         clientId: string,
         type: string,
+        scope?: string,
     }): CancelablePromise<Array<StrategyResponse>> {
         return this.httpRequest.request({
             method: 'GET',
@@ -46,6 +53,9 @@ export class StrategiesService {
             path: {
                 'clientId': clientId,
                 'type': type,
+            },
+            query: {
+                'scope': scope,
             },
         });
     }

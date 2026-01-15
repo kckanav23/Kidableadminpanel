@@ -1,0 +1,7361 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "KidAble Backend API",
+    "description": "Parent/therapist endpoints for KidAble app (Supabase-compatible monolith).",
+    "contact": {
+      "name": "KidAble",
+      "email": "support@kidable.com"
+    },
+    "license": {
+      "name": "MIT"
+    },
+    "version": "0.0.1"
+  },
+  "externalDocs": {
+    "description": "Frontend scratch reference",
+    "url": "scratch/src/api"
+  },
+  "servers": [
+    {
+      "url": "http://backend.kidable.in",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Admin Strategies",
+      "description": "Admin/therapist strategies access"
+    },
+    {
+      "name": "Admin Client Journal",
+      "description": "View client journal entries logged by parents"
+    },
+    {
+      "name": "Admin Client Mood",
+      "description": "View client mood entries logged by parents"
+    },
+    {
+      "name": "Client",
+      "description": "Client profile and dashboard"
+    },
+    {
+      "name": "Mood",
+      "description": "Mood tracking"
+    },
+    {
+      "name": "Goals",
+      "description": "Therapy goals and progress"
+    },
+    {
+      "name": "Admin Goal Progress",
+      "description": "Admin/therapist goal progress management"
+    },
+    {
+      "name": "Admin Parents",
+      "description": "Parent directory - search and view parents"
+    },
+    {
+      "name": "Admin Client Therapists",
+      "description": "Manage therapist assignments to clients"
+    },
+    {
+      "name": "Strategies",
+      "description": "Strategies assigned to a client"
+    },
+    {
+      "name": "Admin Resource Library",
+      "description": "Resource library management - browse, create, edit resources"
+    },
+    {
+      "name": "Admin Staff Access Codes",
+      "description": "Manage staff access codes"
+    },
+    {
+      "name": "Admin Homework",
+      "description": "Admin/therapist homework access"
+    },
+    {
+      "name": "Admin Session Activities",
+      "description": "Admin/therapist session activity management"
+    },
+    {
+      "name": "Journal",
+      "description": "Parent journal entries"
+    },
+    {
+      "name": "Admin Sessions",
+      "description": "Admin/therapist sessions access"
+    },
+    {
+      "name": "Auth",
+      "description": "Access code based authentication"
+    },
+    {
+      "name": "Homework",
+      "description": "Homework assignments and completions"
+    },
+    {
+      "name": "Admin Strategy Library",
+      "description": "Strategy library management - browse, create, edit strategies"
+    },
+    {
+      "name": "Admin Goals",
+      "description": "Admin/therapist goals access"
+    },
+    {
+      "name": "Admin Parent Access Codes",
+      "description": "Manage parent access codes"
+    },
+    {
+      "name": "Admin Client Profile",
+      "description": "Manage client profile sub-records (communication, support network, initial goals)"
+    },
+    {
+      "name": "Staff Auth",
+      "description": "Therapist/Admin access code authentication"
+    },
+    {
+      "name": "Admin Clients",
+      "description": "Admin client management endpoints"
+    },
+    {
+      "name": "Sessions",
+      "description": "Session notes and activities"
+    },
+    {
+      "name": "Admin Client Resources",
+      "description": "Client resource management - list, assign, unassign (staff scoped)"
+    },
+    {
+      "name": "Admin Therapists",
+      "description": "Therapist directory management"
+    },
+    {
+      "name": "Resources",
+      "description": "Resources available to the client (global + assigned)"
+    },
+    {
+      "name": "Admin Client Parents",
+      "description": "Manage parent/caregiver assignments to clients"
+    },
+    {
+      "name": "Admin Audit Log",
+      "description": "Query audit logs (admin only)"
+    }
+  ],
+  "paths": {
+    "/admin/sessions/{sessionId}/activities/{activityId}": {
+      "put": {
+        "tags": [
+          "Admin Session Activities"
+        ],
+        "summary": "Update session activity (staff scoped)",
+        "operationId": "updateActivity",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionActivityUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionActivityResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Session Activities"
+        ],
+        "summary": "Delete session activity (staff scoped)",
+        "operationId": "deleteActivity",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/admin/goals/{goalId}/progress/{progressId}": {
+      "put": {
+        "tags": [
+          "Admin Goal Progress"
+        ],
+        "summary": "Update goal progress (staff scoped)",
+        "operationId": "updateProgress",
+        "parameters": [
+          {
+            "name": "goalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "progressId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalProgressUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalProgressResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Goal Progress"
+        ],
+        "summary": "Delete goal progress (staff scoped)",
+        "operationId": "deleteProgress",
+        "parameters": [
+          {
+            "name": "goalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "progressId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/support-network/{entryId}": {
+      "put": {
+        "tags": [
+          "Admin Client Profile"
+        ],
+        "summary": "Update support network entry",
+        "operationId": "updateSupportNetwork",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "entryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupportNetworkUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportNetworkResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Client Profile"
+        ],
+        "summary": "Delete support network entry",
+        "operationId": "deleteSupportNetwork",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "entryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/parents/{parentId}": {
+      "put": {
+        "tags": [
+          "Admin Client Parents"
+        ],
+        "summary": "Update a parent and/or their relationship to the client",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "parentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientParentUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientParentResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Client Parents"
+        ],
+        "summary": "Remove a parent from a client",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "parentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/initial-goals/{goalId}": {
+      "put": {
+        "tags": [
+          "Admin Client Profile"
+        ],
+        "summary": "Update initial goal",
+        "operationId": "updateInitialGoal",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "goalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitialGoalUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitialGoalResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Client Profile"
+        ],
+        "summary": "Delete initial goal",
+        "operationId": "deleteInitialGoal",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "goalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/communication/{commId}": {
+      "put": {
+        "tags": [
+          "Admin Client Profile"
+        ],
+        "summary": "Update communication style",
+        "operationId": "updateCommunication",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "commId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommunicationUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommunicationResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Client Profile"
+        ],
+        "summary": "Delete communication style",
+        "operationId": "deleteCommunication",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "commId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/staff/auth/login": {
+      "post": {
+        "tags": [
+          "Staff Auth"
+        ],
+        "summary": "Login with staff access code",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffLoginResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/client/{clientId}/mood": {
+      "get": {
+        "tags": [
+          "Mood"
+        ],
+        "operationId": "getMoodEntries",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 30,
+              "maximum": 365,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MoodEntryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Mood"
+        ],
+        "summary": "Log mood entry",
+        "description": "Path params:\n- clientId (uuid, required)\nBody:\n- parentId (uuid, optional)\n- entryDate (date, optional, defaults to today)\n- mood (required)\n- zone (optional)\n- energyLevel (optional)\n- emoji (optional)\n- notes (optional)",
+        "operationId": "logMood",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoodEntryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoodEntryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/client/{clientId}/journal": {
+      "get": {
+        "tags": [
+          "Journal"
+        ],
+        "operationId": "getEntries",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 30,
+              "maximum": 200,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JournalEntryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Journal"
+        ],
+        "summary": "Create journal entry",
+        "description": "Path params:\n- clientId (uuid, required)\nBody:\n- parentId (uuid, required)\n- entryDate (date, optional, defaults to today)\n- entryTime (time, optional)\n- zone (string, required)\n- energyGivers, energyDrainers, relaxingActivity, additionalNotes (optional)\n- tags (array of strings)",
+        "operationId": "createEntry",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JournalEntryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/client/{clientId}/homework/{homeworkId}/complete": {
+      "post": {
+        "tags": [
+          "Homework"
+        ],
+        "summary": "Log homework completion",
+        "description": "Append a completion entry for a homework assignment.",
+        "operationId": "logCompletion",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "homeworkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeworkCompletionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeworkCompletionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login with access code",
+        "description": "Request body:\n- accessCode (string, required)\nResponses:\n- 200 with client/parent data\n- 401 if code is invalid/inactive",
+        "operationId": "login_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/therapists": {
+      "get": {
+        "tags": [
+          "Admin Therapists"
+        ],
+        "summary": "List therapists",
+        "description": "List all therapists with optional status and search filters",
+        "operationId": "list",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 0
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseTherapistResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin Therapists"
+        ],
+        "summary": "Create therapist",
+        "description": "Create a new therapist. Optionally generates an access code.",
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TherapistCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TherapistResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/strategies": {
+      "get": {
+        "tags": [
+          "Admin Strategy Library"
+        ],
+        "summary": "List strategies in library",
+        "description": "Browse all strategies. Filter by type, global flag, or search term.",
+        "operationId": "list_1",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "global",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 0
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseStrategyLibraryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin Strategy Library"
+        ],
+        "summary": "Create strategy",
+        "description": "Add a new strategy to the library",
+        "operationId": "create_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrategyCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyLibraryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/staff-codes": {
+      "get": {
+        "tags": [
+          "Admin Staff Access Codes"
+        ],
+        "summary": "List all staff access codes",
+        "description": "Returns all staff access codes with optional filtering",
+        "operationId": "list_2",
+        "parameters": [
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaffAccessCodeResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin Staff Access Codes"
+        ],
+        "summary": "Create a new staff access code",
+        "description": "Generates a new access code for the specified user",
+        "operationId": "create_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffAccessCodeCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffAccessCodeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/sessions/{sessionId}/activities": {
+      "post": {
+        "tags": [
+          "Admin Session Activities"
+        ],
+        "summary": "Add session activity (staff scoped)",
+        "operationId": "addActivity",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionActivityCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionActivityResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/resources": {
+      "get": {
+        "tags": [
+          "Admin Resource Library"
+        ],
+        "summary": "List resources in library",
+        "description": "Browse all resources. Filter by type, category, global flag, or search term.",
+        "operationId": "list_3",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 0
+            }
+          },
+          {
+            "name": "global",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 0
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseResourceLibraryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin Resource Library"
+        ],
+        "summary": "Create resource",
+        "description": "Add a new resource to the library",
+        "operationId": "create_3",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceLibraryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/parents/{parentId}/access-codes": {
+      "get": {
+        "tags": [
+          "Admin Parent Access Codes"
+        ],
+        "summary": "List access codes for a parent",
+        "operationId": "list_4",
+        "parameters": [
+          {
+            "name": "parentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ParentAccessCodeResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin Parent Access Codes"
+        ],
+        "summary": "Create a new access code for a parent",
+        "description": "Generates a code when none is provided; validates uniqueness when provided.",
+        "operationId": "create_4",
+        "parameters": [
+          {
+            "name": "parentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentAccessCodeCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParentAccessCodeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/goals/{goalId}/progress": {
+      "post": {
+        "tags": [
+          "Admin Goal Progress"
+        ],
+        "summary": "Add goal progress (staff scoped)",
+        "operationId": "addProgress",
+        "parameters": [
+          {
+            "name": "goalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalProgressCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalProgressResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients": {
+      "get": {
+        "tags": [
+          "Admin Clients"
+        ],
+        "summary": "List clients",
+        "description": "Filter by status, search term, or therapy type. Use mine=true to list only clients assigned to current therapist. Admins see all by default.",
+        "operationId": "listClients",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 0
+            }
+          },
+          {
+            "name": "therapy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "mine",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseClientSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin Clients"
+        ],
+        "summary": "Create client",
+        "operationId": "createClient",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/therapists": {
+      "get": {
+        "tags": [
+          "Admin Client Therapists"
+        ],
+        "summary": "List therapists assigned to a client",
+        "operationId": "list_5",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientTherapistResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin Client Therapists"
+        ],
+        "summary": "Assign a therapist to a client",
+        "operationId": "assign",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TherapistAssignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientTherapistResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/support-network": {
+      "post": {
+        "tags": [
+          "Admin Client Profile"
+        ],
+        "summary": "Add support network entry",
+        "operationId": "createSupportNetwork",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupportNetworkCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportNetworkResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/strategies/assign": {
+      "post": {
+        "tags": [
+          "Admin Strategies"
+        ],
+        "summary": "Assign strategy to client (staff scoped)",
+        "operationId": "assign_1",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientStrategyAssignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/sessions": {
+      "get": {
+        "tags": [
+          "Admin Sessions"
+        ],
+        "summary": "List sessions (staff scoped)",
+        "operationId": "getSessions",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SessionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin Sessions"
+        ],
+        "summary": "Create session (staff scoped)",
+        "operationId": "createSession",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/resources/assign": {
+      "post": {
+        "tags": [
+          "Admin Client Resources"
+        ],
+        "summary": "Assign resource to client (staff scoped)",
+        "operationId": "assign_2",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientResourceAssignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/parents": {
+      "get": {
+        "tags": [
+          "Admin Client Parents"
+        ],
+        "summary": "List parents/caregivers linked to a client",
+        "operationId": "list_6",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientParentResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin Client Parents"
+        ],
+        "summary": "Add a parent to a client",
+        "description": "If parentId is provided, links existing parent. Otherwise creates a new parent.",
+        "operationId": "create_5",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientParentCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientParentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/initial-goals": {
+      "post": {
+        "tags": [
+          "Admin Client Profile"
+        ],
+        "summary": "Add initial goal",
+        "operationId": "createInitialGoal",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitialGoalCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitialGoalResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/homework": {
+      "get": {
+        "tags": [
+          "Admin Homework"
+        ],
+        "summary": "List homework (staff scoped)",
+        "operationId": "getHomework",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HomeworkResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin Homework"
+        ],
+        "summary": "Create homework (staff scoped)",
+        "operationId": "createHomework",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeworkCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeworkResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/homework/{homeworkId}/complete": {
+      "post": {
+        "tags": [
+          "Admin Homework"
+        ],
+        "summary": "Log homework completion (staff scoped)",
+        "operationId": "logCompletion_1",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "homeworkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeworkCompletionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeworkCompletionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/goals": {
+      "get": {
+        "tags": [
+          "Admin Goals"
+        ],
+        "summary": "List goals (staff scoped)",
+        "operationId": "getGoals",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GoalResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin Goals"
+        ],
+        "summary": "Create goal (staff scoped)",
+        "operationId": "createGoal",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/communication": {
+      "post": {
+        "tags": [
+          "Admin Client Profile"
+        ],
+        "summary": "Add communication style",
+        "operationId": "createCommunication",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommunicationCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommunicationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/therapists/{therapistId}": {
+      "get": {
+        "tags": [
+          "Admin Therapists"
+        ],
+        "summary": "Get therapist details",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "therapistId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TherapistResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Therapists"
+        ],
+        "summary": "Deactivate therapist",
+        "description": "Sets the therapist status to inactive",
+        "operationId": "deactivate",
+        "parameters": [
+          {
+            "name": "therapistId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Admin Therapists"
+        ],
+        "summary": "Update therapist",
+        "operationId": "update_1",
+        "parameters": [
+          {
+            "name": "therapistId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TherapistUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TherapistResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/strategies/{strategyId}": {
+      "get": {
+        "tags": [
+          "Admin Strategy Library"
+        ],
+        "summary": "Get strategy details",
+        "operationId": "get_1",
+        "parameters": [
+          {
+            "name": "strategyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyLibraryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Strategy Library"
+        ],
+        "summary": "Delete strategy",
+        "description": "Soft deletes the strategy from the library",
+        "operationId": "delete_1",
+        "parameters": [
+          {
+            "name": "strategyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Admin Strategy Library"
+        ],
+        "summary": "Update strategy",
+        "operationId": "update_2",
+        "parameters": [
+          {
+            "name": "strategyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrategyUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyLibraryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/resources/{resourceId}": {
+      "get": {
+        "tags": [
+          "Admin Resource Library"
+        ],
+        "summary": "Get resource details",
+        "operationId": "get_2",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceLibraryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Resource Library"
+        ],
+        "summary": "Delete resource",
+        "description": "Soft deletes the resource from the library",
+        "operationId": "delete_2",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Admin Resource Library"
+        ],
+        "summary": "Update resource",
+        "operationId": "update_3",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceLibraryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/parents/{parentId}/access-codes/{accessCodeId}": {
+      "delete": {
+        "tags": [
+          "Admin Parent Access Codes"
+        ],
+        "summary": "Delete an access code",
+        "operationId": "delete_3",
+        "parameters": [
+          {
+            "name": "parentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "accessCodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Admin Parent Access Codes"
+        ],
+        "summary": "Update an access code",
+        "operationId": "update_4",
+        "parameters": [
+          {
+            "name": "parentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "accessCodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentAccessCodeUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParentAccessCodeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}": {
+      "get": {
+        "tags": [
+          "Admin Clients"
+        ],
+        "summary": "Get client profile (admin)",
+        "operationId": "getClient",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Clients"
+        ],
+        "summary": "Soft delete client",
+        "operationId": "deleteClient",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Admin Clients"
+        ],
+        "summary": "Update client (partial)",
+        "operationId": "updateClient",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/sessions/{sessionId}": {
+      "get": {
+        "tags": [
+          "Admin Sessions"
+        ],
+        "summary": "Get session by id (staff scoped)",
+        "operationId": "getSession",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Sessions"
+        ],
+        "summary": "Delete session (soft, staff scoped)",
+        "operationId": "deleteSession",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Admin Sessions"
+        ],
+        "summary": "Update session (staff scoped)",
+        "operationId": "updateSession",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/homework/{homeworkId}": {
+      "delete": {
+        "tags": [
+          "Admin Homework"
+        ],
+        "summary": "Delete homework (soft, staff scoped)",
+        "operationId": "deleteHomework",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "homeworkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Admin Homework"
+        ],
+        "summary": "Update homework (staff scoped)",
+        "operationId": "updateHomework",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "homeworkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeworkUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeworkResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/goals/{goalId}": {
+      "delete": {
+        "tags": [
+          "Admin Goals"
+        ],
+        "summary": "Delete goal (soft, staff scoped)",
+        "operationId": "deleteGoal",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "goalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Admin Goals"
+        ],
+        "summary": "Update goal (staff scoped)",
+        "operationId": "updateGoal",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "goalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "health-controller"
+        ],
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/client/{clientId}/strategies": {
+      "get": {
+        "tags": [
+          "Strategies"
+        ],
+        "summary": "Get all strategies grouped by type",
+        "description": "Path params: clientId (uuid). Returns active strategies grouped into antecedent, reinforcement, regulation.",
+        "operationId": "getAll",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategiesByTypeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/client/{clientId}/strategies/{type}": {
+      "get": {
+        "tags": [
+          "Strategies"
+        ],
+        "summary": "Get strategies by type",
+        "description": "Path params: clientId (uuid), type (antecedent|reinforcement|regulation). Returns active strategies of that type.",
+        "operationId": "getByType",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StrategyResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/client/{clientId}/sessions": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "List sessions",
+        "description": "Recent sessions for a client, with therapist and activities.",
+        "operationId": "getSessions_1",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "maximum": 200,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SessionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/client/{clientId}/sessions/{sessionId}": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Get session by id",
+        "description": "Path params:\n- clientId (uuid, required)\n- sessionId (uuid, required)\nReturns session with therapist and activities.",
+        "operationId": "getSession_1",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/client/{clientId}/resources": {
+      "get": {
+        "tags": [
+          "Resources"
+        ],
+        "summary": "List resources",
+        "description": "Returns client-specific resources plus global resources.",
+        "operationId": "getResources",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/client/{clientId}/profile": {
+      "get": {
+        "tags": [
+          "Client"
+        ],
+        "summary": "Get client profile",
+        "description": "Path params:\n- clientId (uuid, required)\nReturns client info + parents + support network + communication styles + initial goals.",
+        "operationId": "getProfile",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/client/{clientId}/homework": {
+      "get": {
+        "tags": [
+          "Homework"
+        ],
+        "summary": "List homework",
+        "description": "Fetch homework assignments for a client; filter active by default.",
+        "operationId": "getHomework_1",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HomeworkResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/client/{clientId}/goals": {
+      "get": {
+        "tags": [
+          "Goals"
+        ],
+        "summary": "List goals",
+        "description": "Path params:\n- clientId (uuid, required)\nQuery params:\n- status (optional: active|achieved|discontinued|on_hold)\nReturns goals with progress.",
+        "operationId": "getGoals_1",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GoalResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/client/{clientId}/dashboard": {
+      "get": {
+        "tags": [
+          "Client"
+        ],
+        "summary": "Get dashboard stats",
+        "description": "Path params:\n- clientId (uuid, required)\nReturns summary counts and today's mood if present.",
+        "operationId": "getDashboard",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardStatsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/staff-codes/{id}": {
+      "get": {
+        "tags": [
+          "Admin Staff Access Codes"
+        ],
+        "summary": "Get staff access code by ID",
+        "operationId": "get_3",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffAccessCodeResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Staff Access Codes"
+        ],
+        "summary": "Revoke a staff access code",
+        "description": "Deactivates the access code so it can no longer be used",
+        "operationId": "revoke",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/admin/parents": {
+      "get": {
+        "tags": [
+          "Admin Parents"
+        ],
+        "summary": "List/search parents",
+        "description": "Search parents by name, email, or phone",
+        "operationId": "list_7",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 0
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseParentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/parents/{parentId}": {
+      "get": {
+        "tags": [
+          "Admin Parents"
+        ],
+        "summary": "Get parent details",
+        "operationId": "get_4",
+        "parameters": [
+          {
+            "name": "parentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/strategies": {
+      "get": {
+        "tags": [
+          "Admin Strategies"
+        ],
+        "summary": "Get all strategies grouped (staff scoped)",
+        "operationId": "getAll_1",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategiesByTypeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/strategies/{type}": {
+      "get": {
+        "tags": [
+          "Admin Strategies"
+        ],
+        "summary": "Get strategies by type (staff scoped)",
+        "operationId": "getByType_1",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StrategyResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/resources": {
+      "get": {
+        "tags": [
+          "Admin Client Resources"
+        ],
+        "summary": "List resources for client (staff scoped)",
+        "operationId": "getResources_1",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/mood": {
+      "get": {
+        "tags": [
+          "Admin Client Mood"
+        ],
+        "summary": "Get client mood entries",
+        "description": "View mood entries logged by parents for this client",
+        "operationId": "getMoodEntries_1",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 30,
+              "maximum": 365,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MoodEntryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/journal": {
+      "get": {
+        "tags": [
+          "Admin Client Journal"
+        ],
+        "summary": "Get client journal entries",
+        "description": "View journal entries logged by parents for this client",
+        "operationId": "getJournalEntries",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 30,
+              "maximum": 200,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JournalEntryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/audit": {
+      "get": {
+        "tags": [
+          "Admin Audit Log"
+        ],
+        "summary": "List audit logs",
+        "description": "Admin-only endpoint. Filter by resourceType, userId, or date range.",
+        "operationId": "list_8",
+        "parameters": [
+          {
+            "name": "resourceType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseAuditLogResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/audit/resource/{resourceId}": {
+      "get": {
+        "tags": [
+          "Admin Audit Log"
+        ],
+        "summary": "Get audit history for a specific resource",
+        "operationId": "getByResource",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditLogResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/therapists/{therapistId}": {
+      "delete": {
+        "tags": [
+          "Admin Client Therapists"
+        ],
+        "summary": "Remove a therapist from a client",
+        "operationId": "unassign",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "therapistId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/strategies/{strategyId}": {
+      "delete": {
+        "tags": [
+          "Admin Strategies"
+        ],
+        "summary": "Unassign strategy from client (staff scoped)",
+        "operationId": "unassign_1",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "strategyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/admin/clients/{clientId}/resources/{resourceId}": {
+      "delete": {
+        "tags": [
+          "Admin Client Resources"
+        ],
+        "summary": "Unassign resource from client (staff scoped)",
+        "operationId": "unassign_2",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SessionActivityUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "sequenceOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activity": {
+            "type": "string"
+          },
+          "antecedent": {
+            "type": "string"
+          },
+          "behaviour": {
+            "type": "string"
+          },
+          "consequences": {
+            "type": "string"
+          },
+          "promptType": {
+            "type": "string",
+            "enum": [
+              "full_physical",
+              "partial_physical",
+              "verbal",
+              "textual",
+              "gestural",
+              "independent"
+            ]
+          }
+        }
+      },
+      "SessionActivityResponse": {
+        "type": "object",
+        "description": "Session activity row",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sequenceOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activity": {
+            "type": "string"
+          },
+          "antecedent": {
+            "type": "string"
+          },
+          "behaviour": {
+            "type": "string"
+          },
+          "consequences": {
+            "type": "string"
+          },
+          "promptType": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GoalProgressUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "recordedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "GoalProgressResponse": {
+        "type": "object",
+        "description": "Goal progress entry",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Progress entry id"
+          },
+          "value": {
+            "type": "number"
+          },
+          "recordedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "SupportNetworkUpdateRequest": {
+        "type": "object",
+        "description": "Request to update a support network entry",
+        "properties": {
+          "role": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "contact": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        }
+      },
+      "SupportNetworkResponse": {
+        "type": "object",
+        "description": "Support network entry",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "contact": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ClientParentUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "primary": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ClientParentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "primary": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "InitialGoalUpdateRequest": {
+        "type": "object",
+        "description": "Request to update an initial goal",
+        "properties": {
+          "goalText": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "setBy": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "therapy": {
+            "type": "string",
+            "enum": [
+              "ABA",
+              "Speech",
+              "OT"
+            ]
+          }
+        }
+      },
+      "InitialGoalResponse": {
+        "type": "object",
+        "description": "Initial goal entry",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "goalText": {
+            "type": "string"
+          },
+          "setBy": {
+            "type": "string"
+          },
+          "therapy": {
+            "type": "string",
+            "enum": [
+              "ABA",
+              "Speech",
+              "OT"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CommunicationUpdateRequest": {
+        "type": "object",
+        "description": "Request to update a communication style entry",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "vocal_speech",
+              "gestures",
+              "pictures",
+              "sign_language",
+              "body_language",
+              "aac"
+            ]
+          },
+          "proficiency": {
+            "type": "string",
+            "enum": [
+              "primary",
+              "emerging",
+              "not_used"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        }
+      },
+      "CommunicationResponse": {
+        "type": "object",
+        "description": "Communication style entry",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "vocal_speech",
+              "gestures",
+              "pictures",
+              "sign_language",
+              "body_language",
+              "aac"
+            ]
+          },
+          "proficiency": {
+            "type": "string",
+            "enum": [
+              "primary",
+              "emerging",
+              "not_used"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "StaffLoginRequest": {
+        "type": "object",
+        "properties": {
+          "accessCode": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "accessCode"
+        ]
+      },
+      "StaffLoginResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Login success"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Staff user id"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Full name"
+          },
+          "role": {
+            "type": "string",
+            "description": "User role",
+            "enum": [
+              "admin",
+              "therapist",
+              "parent"
+            ]
+          },
+          "admin": {
+            "type": "boolean",
+            "description": "Is admin"
+          }
+        }
+      },
+      "MoodEntryRequest": {
+        "type": "object",
+        "properties": {
+          "parentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Parent id (optional)",
+            "example": "b0000001-0001-0001-0001-000000000001"
+          },
+          "entryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Entry date (defaults to today if null)",
+            "example": "2025-12-03"
+          },
+          "mood": {
+            "type": "string",
+            "description": "Mood",
+            "enum": [
+              "very_happy",
+              "happy",
+              "okay",
+              "sad",
+              "very_sad"
+            ],
+            "example": "happy"
+          },
+          "zone": {
+            "type": "string",
+            "description": "Zone",
+            "enum": [
+              "green",
+              "yellow",
+              "orange",
+              "red",
+              "blue"
+            ],
+            "example": "green"
+          },
+          "energyLevel": {
+            "type": "string",
+            "description": "Energy level",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "example": "medium"
+          },
+          "emoji": {
+            "type": "string",
+            "description": "Emoji",
+            "example": "😊",
+            "maxLength": 8,
+            "minLength": 0
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notes",
+            "maxLength": 2000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "mood"
+        ]
+      },
+      "MoodEntryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Mood entry id"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Client id"
+          },
+          "parentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Parent id"
+          },
+          "entryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Entry date"
+          },
+          "mood": {
+            "type": "string",
+            "description": "Mood",
+            "enum": [
+              "very_happy",
+              "happy",
+              "okay",
+              "sad",
+              "very_sad"
+            ]
+          },
+          "zone": {
+            "type": "string",
+            "description": "Zone",
+            "enum": [
+              "green",
+              "yellow",
+              "orange",
+              "red",
+              "blue"
+            ]
+          },
+          "energyLevel": {
+            "type": "string",
+            "description": "Energy level",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "emoji": {
+            "type": "string",
+            "description": "Emoji"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notes"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Created at"
+          }
+        }
+      },
+      "JournalEntryRequest": {
+        "type": "object",
+        "properties": {
+          "parentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Parent id",
+            "example": "b0000001-0001-0001-0001-000000000001"
+          },
+          "entryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Entry date (defaults to today if null)",
+            "example": "2025-12-03"
+          },
+          "entryTime": {
+            "type": "string",
+            "description": "Entry time",
+            "example": "20:51"
+          },
+          "zone": {
+            "type": "string",
+            "description": "Zone",
+            "enum": [
+              "green",
+              "yellow",
+              "orange",
+              "red",
+              "blue"
+            ],
+            "example": "blue"
+          },
+          "energyGivers": {
+            "type": "string",
+            "description": "Energy givers",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "energyDrainers": {
+            "type": "string",
+            "description": "Energy drainers",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "relaxingActivity": {
+            "type": "string",
+            "description": "Relaxing activity",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "additionalNotes": {
+            "type": "string",
+            "description": "Additional notes",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags",
+            "example": [
+              "success"
+            ],
+            "items": {
+              "type": "string",
+              "maxLength": 50,
+              "minLength": 0
+            },
+            "maxItems": 20,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "parentId",
+          "zone"
+        ]
+      },
+      "JournalEntryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entry id"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Client id"
+          },
+          "parentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Parent id"
+          },
+          "entryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Entry date"
+          },
+          "entryTime": {
+            "type": "string",
+            "description": "Entry time"
+          },
+          "zone": {
+            "type": "string",
+            "description": "Zone",
+            "enum": [
+              "green",
+              "yellow",
+              "orange",
+              "red",
+              "blue"
+            ]
+          },
+          "energyGivers": {
+            "type": "string",
+            "description": "Energy givers"
+          },
+          "energyDrainers": {
+            "type": "string",
+            "description": "Energy drainers"
+          },
+          "relaxingActivity": {
+            "type": "string",
+            "description": "Relaxing activity"
+          },
+          "additionalNotes": {
+            "type": "string",
+            "description": "Additional notes"
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Created at"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Updated at"
+          },
+          "parent": {
+            "$ref": "#/components/schemas/ParentSummary"
+          }
+        }
+      },
+      "ParentSummary": {
+        "type": "object",
+        "description": "Parent summary",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          }
+        }
+      },
+      "HomeworkCompletionRequest": {
+        "type": "object",
+        "properties": {
+          "completionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Completion date (defaults to today if null)",
+            "example": "2025-12-03"
+          },
+          "frequencyCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Frequency count (for frequency type)"
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Duration minutes (for duration type)"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status",
+            "enum": [
+              "worked",
+              "not_worked",
+              "yet_to_try",
+              "not_started"
+            ],
+            "example": "worked"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notes",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "loggedByParent": {
+            "type": "string",
+            "description": "Parent id string (optional)",
+            "example": "b0000001-0001-0001-0001-000000000001",
+            "pattern": "^[0-9a-fA-F\\-]{36}$"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "HomeworkCompletionResponse": {
+        "type": "object",
+        "description": "Homework completion entry",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "completionDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "frequencyCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "worked",
+              "not_worked",
+              "yet_to_try",
+              "not_started"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "loggedByParent": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "accessCode": {
+            "type": "string",
+            "description": "Parent access code provided by staff",
+            "example": "DEMO2025",
+            "maxLength": 50,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "accessCode"
+        ]
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether login succeeded"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Client identifier",
+            "example": "c0000001-0001-0001-0001-000000000001"
+          },
+          "clientName": {
+            "type": "string",
+            "description": "Client full name",
+            "example": "Alex Johnson"
+          },
+          "parentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Parent identifier",
+            "example": "b0000001-0001-0001-0001-000000000001"
+          },
+          "parentName": {
+            "type": "string",
+            "description": "Parent full name",
+            "example": "Sarah Johnson"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "TherapistCreateRequest": {
+        "type": "object",
+        "description": "Request to create a therapist",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "description": "Full name",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "status": {
+            "type": "string",
+            "description": "Account status (defaults to active)",
+            "enum": [
+              "active",
+              "inactive",
+              "suspended"
+            ]
+          },
+          "specialization": {
+            "type": "array",
+            "description": "Therapy specializations",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ABA",
+                "Speech",
+                "OT"
+              ]
+            }
+          },
+          "avatarUrl": {
+            "type": "string",
+            "description": "Avatar URL",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "generateAccessCode": {
+            "type": "boolean",
+            "description": "Generate an access code for this therapist"
+          },
+          "isAdmin": {
+            "type": "boolean",
+            "description": "Make the generated access code an admin code"
+          }
+        },
+        "required": [
+          "fullName"
+        ]
+      },
+      "TherapistResponse": {
+        "type": "object",
+        "description": "Therapist details",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Therapist ID"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Full name"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number"
+          },
+          "role": {
+            "type": "string",
+            "description": "User role",
+            "enum": [
+              "admin",
+              "therapist",
+              "parent"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Account status",
+            "enum": [
+              "active",
+              "inactive",
+              "suspended"
+            ]
+          },
+          "specialization": {
+            "type": "array",
+            "description": "Therapy specializations",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ABA",
+                "Speech",
+                "OT"
+              ]
+            }
+          },
+          "avatarUrl": {
+            "type": "string",
+            "description": "Avatar URL"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Account creation timestamp"
+          },
+          "lastLogin": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last login timestamp"
+          },
+          "accessCode": {
+            "type": "string",
+            "description": "Generated access code (only returned on create)"
+          }
+        }
+      },
+      "StrategyCreateRequest": {
+        "type": "object",
+        "description": "Request to create a strategy in the library",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Strategy title",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "description": "Strategy description",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "type": {
+            "type": "string",
+            "description": "Strategy type",
+            "enum": [
+              "antecedent",
+              "reinforcement",
+              "regulation"
+            ]
+          },
+          "whenToUse": {
+            "type": "string",
+            "description": "When to use this strategy",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "howToUse": {
+            "type": "string",
+            "description": "How to use this strategy",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "steps": {
+            "type": "array",
+            "description": "Implementation steps",
+            "items": {
+              "type": "string"
+            }
+          },
+          "examples": {
+            "type": "array",
+            "description": "Usage examples",
+            "items": {
+              "type": "string"
+            }
+          },
+          "targetZone": {
+            "type": "string",
+            "description": "Target zone for this strategy",
+            "enum": [
+              "green",
+              "yellow",
+              "orange",
+              "red",
+              "blue"
+            ]
+          },
+          "global": {
+            "type": "boolean",
+            "description": "Whether this is a global strategy (defaults to true)"
+          }
+        },
+        "required": [
+          "title",
+          "type"
+        ]
+      },
+      "StrategyLibraryResponse": {
+        "type": "object",
+        "description": "Strategy library entry",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Strategy ID"
+          },
+          "title": {
+            "type": "string",
+            "description": "Strategy title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Strategy description"
+          },
+          "type": {
+            "type": "string",
+            "description": "Strategy type",
+            "enum": [
+              "antecedent",
+              "reinforcement",
+              "regulation"
+            ]
+          },
+          "whenToUse": {
+            "type": "string",
+            "description": "When to use this strategy"
+          },
+          "howToUse": {
+            "type": "string",
+            "description": "How to use this strategy"
+          },
+          "steps": {
+            "type": "array",
+            "description": "Implementation steps",
+            "items": {
+              "type": "string"
+            }
+          },
+          "examples": {
+            "type": "array",
+            "description": "Usage examples",
+            "items": {
+              "type": "string"
+            }
+          },
+          "targetZone": {
+            "type": "string",
+            "description": "Target zone for this strategy",
+            "enum": [
+              "green",
+              "yellow",
+              "orange",
+              "red",
+              "blue"
+            ]
+          },
+          "global": {
+            "type": "boolean",
+            "description": "Whether this is a global strategy"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        }
+      },
+      "StaffAccessCodeCreateRequest": {
+        "type": "object",
+        "description": "Request to create a staff access code",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "User ID to create code for"
+          },
+          "admin": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this code grants admin privileges"
+          }
+        },
+        "required": [
+          "userId"
+        ]
+      },
+      "StaffAccessCodeResponse": {
+        "type": "object",
+        "description": "Staff access code details",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "userEmail": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "admin": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsed": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SessionActivityCreateRequest": {
+        "type": "object",
+        "properties": {
+          "sequenceOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activity": {
+            "type": "string",
+            "minLength": 1
+          },
+          "antecedent": {
+            "type": "string"
+          },
+          "behaviour": {
+            "type": "string"
+          },
+          "consequences": {
+            "type": "string"
+          },
+          "promptType": {
+            "type": "string",
+            "enum": [
+              "full_physical",
+              "partial_physical",
+              "verbal",
+              "textual",
+              "gestural",
+              "independent"
+            ]
+          }
+        },
+        "required": [
+          "activity",
+          "sequenceOrder"
+        ]
+      },
+      "ResourceCreateRequest": {
+        "type": "object",
+        "description": "Request to create a resource in the library",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Resource title",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "description": "Resource description",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "type": {
+            "type": "string",
+            "description": "Resource type",
+            "enum": [
+              "pdf",
+              "video",
+              "article",
+              "worksheet",
+              "link"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "description": "Resource category",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "fileUrl": {
+            "type": "string",
+            "description": "File URL",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int32",
+            "description": "File size in bytes"
+          },
+          "global": {
+            "type": "boolean",
+            "description": "Whether this is a global resource (defaults to true)"
+          }
+        },
+        "required": [
+          "title",
+          "type"
+        ]
+      },
+      "ResourceLibraryResponse": {
+        "type": "object",
+        "description": "Resource library entry",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Resource ID"
+          },
+          "title": {
+            "type": "string",
+            "description": "Resource title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Resource description"
+          },
+          "type": {
+            "type": "string",
+            "description": "Resource type",
+            "enum": [
+              "pdf",
+              "video",
+              "article",
+              "worksheet",
+              "link"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "description": "Resource category"
+          },
+          "fileUrl": {
+            "type": "string",
+            "description": "File URL"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int32",
+            "description": "File size in bytes"
+          },
+          "global": {
+            "type": "boolean",
+            "description": "Whether this is a global resource"
+          },
+          "uploadedBy": {
+            "type": "string",
+            "description": "Name of user who uploaded this resource"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        }
+      },
+      "ParentAccessCodeCreateRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 4
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "clientId"
+        ]
+      },
+      "ParentAccessCodeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsed": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GoalProgressCreateRequest": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "recordedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      },
+      "ClientCreateRequest": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date"
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "photoUrl": {
+            "type": "string"
+          },
+          "therapyStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "therapies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ABA",
+                "Speech",
+                "OT"
+              ]
+            },
+            "maxItems": 2147483647,
+            "minItems": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "suspended"
+            ]
+          },
+          "sensoryProfile": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "preferences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dislikes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "string"
+          },
+          "initialAssessment": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dateOfBirth",
+          "firstName",
+          "lastName",
+          "therapies",
+          "therapyStartDate"
+        ]
+      },
+      "ClientProfileResponse": {
+        "type": "object",
+        "description": "Client profile with relationships",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Client identifier",
+            "example": "c0000001-0001-0001-0001-000000000001"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "First name",
+            "example": "Alex"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name",
+            "example": "Johnson"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of birth",
+            "example": "2020-03-15"
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Age in years",
+            "example": 5
+          },
+          "photoUrl": {
+            "type": "string",
+            "description": "Avatar/photo URL",
+            "example": "https://example.com/photo.jpg"
+          },
+          "pronouns": {
+            "type": "string",
+            "description": "Pronouns",
+            "example": "they/them"
+          },
+          "therapies": {
+            "type": "array",
+            "description": "Therapies the client receives",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ABA",
+                "Speech",
+                "OT"
+              ]
+            }
+          },
+          "sensoryProfile": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Sensory profile as key/value map"
+          },
+          "preferences": {
+            "type": "array",
+            "description": "Client preferences",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dislikes": {
+            "type": "array",
+            "description": "Client dislikes",
+            "items": {
+              "type": "string"
+            }
+          },
+          "initialAssessment": {
+            "type": "string",
+            "description": "Initial assessment notes"
+          },
+          "communicationStyles": {
+            "type": "array",
+            "description": "Communication styles",
+            "items": {
+              "$ref": "#/components/schemas/CommunicationStyleResponse"
+            }
+          },
+          "supportNetwork": {
+            "type": "array",
+            "description": "Support network contacts",
+            "items": {
+              "$ref": "#/components/schemas/SupportNetworkResponse"
+            }
+          },
+          "initialGoals": {
+            "type": "array",
+            "description": "Initial goals from intake",
+            "items": {
+              "$ref": "#/components/schemas/InitialGoalResponse"
+            }
+          },
+          "clientParents": {
+            "type": "array",
+            "description": "Parent relationships",
+            "items": {
+              "$ref": "#/components/schemas/ClientParentResponse"
+            }
+          }
+        },
+        "required": [
+          "dateOfBirth",
+          "firstName",
+          "id",
+          "lastName",
+          "therapies"
+        ]
+      },
+      "CommunicationStyleResponse": {
+        "type": "object",
+        "description": "Communication style entry",
+        "properties": {
+          "method": {
+            "type": "string",
+            "description": "Communication method",
+            "enum": [
+              "vocal_speech",
+              "gestures",
+              "pictures",
+              "sign_language",
+              "body_language",
+              "aac"
+            ]
+          },
+          "proficiency": {
+            "type": "string",
+            "description": "Proficiency",
+            "enum": [
+              "primary",
+              "emerging",
+              "not_used"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notes"
+          }
+        },
+        "required": [
+          "method",
+          "proficiency"
+        ]
+      },
+      "TherapistAssignRequest": {
+        "type": "object",
+        "properties": {
+          "therapistId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "primary": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "therapistId"
+        ]
+      },
+      "ClientTherapistResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "therapistId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "therapistName": {
+            "type": "string"
+          },
+          "primary": {
+            "type": "boolean"
+          },
+          "assignedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SupportNetworkCreateRequest": {
+        "type": "object",
+        "description": "Request to create a support network entry",
+        "properties": {
+          "role": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "contact": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "name",
+          "role"
+        ]
+      },
+      "ClientStrategyAssignRequest": {
+        "type": "object",
+        "properties": {
+          "strategyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignedDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "strategyId"
+        ]
+      },
+      "StrategyResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Strategy id"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type",
+            "enum": [
+              "antecedent",
+              "reinforcement",
+              "regulation"
+            ]
+          },
+          "whenToUse": {
+            "type": "string",
+            "description": "When to use"
+          },
+          "howToUse": {
+            "type": "string",
+            "description": "How to use"
+          },
+          "steps": {
+            "type": "array",
+            "description": "Steps",
+            "items": {
+              "type": "string"
+            }
+          },
+          "examples": {
+            "type": "array",
+            "description": "Examples",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isGlobal": {
+            "type": "boolean",
+            "description": "Is global"
+          },
+          "effectiveness": {
+            "type": "string",
+            "description": "Effectiveness rating"
+          },
+          "customNotes": {
+            "type": "string",
+            "description": "Custom notes for client"
+          },
+          "customExamples": {
+            "type": "array",
+            "description": "Custom examples for client",
+            "items": {
+              "type": "string"
+            }
+          },
+          "assignedDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Assigned date"
+          }
+        }
+      },
+      "SessionCreateRequest": {
+        "type": "object",
+        "properties": {
+          "sessionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sessionDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "therapy": {
+            "type": "string",
+            "enum": [
+              "ABA",
+              "Speech",
+              "OT"
+            ]
+          },
+          "longTermObjective": {
+            "type": "string"
+          },
+          "shortTermObjective": {
+            "type": "string"
+          },
+          "zone": {
+            "type": "string",
+            "enum": [
+              "green",
+              "yellow",
+              "orange",
+              "red",
+              "blue"
+            ]
+          },
+          "sessionTags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "successes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "struggles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "interventionsUsed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "strategiesUsed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reinforcementTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "discussionStatus": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "additionalNotes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sessionDate",
+          "sessionNumber",
+          "therapy"
+        ]
+      },
+      "SessionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Session id"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Client id"
+          },
+          "sessionNumber": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Session number",
+            "example": 15
+          },
+          "sessionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Session date",
+            "example": "2025-11-18"
+          },
+          "therapy": {
+            "type": "string",
+            "description": "Therapy type",
+            "enum": [
+              "ABA",
+              "Speech",
+              "OT"
+            ]
+          },
+          "longTermObjective": {
+            "type": "string",
+            "description": "Long-term objective"
+          },
+          "shortTermObjective": {
+            "type": "string",
+            "description": "Short-term objective"
+          },
+          "zone": {
+            "type": "string",
+            "description": "Zone",
+            "enum": [
+              "green",
+              "yellow",
+              "orange",
+              "red",
+              "blue"
+            ]
+          },
+          "sessionTags": {
+            "type": "array",
+            "description": "Session tags",
+            "items": {
+              "type": "string"
+            }
+          },
+          "successes": {
+            "type": "array",
+            "description": "Success notes",
+            "items": {
+              "type": "string"
+            }
+          },
+          "struggles": {
+            "type": "array",
+            "description": "Struggle notes",
+            "items": {
+              "type": "string"
+            }
+          },
+          "interventionsUsed": {
+            "type": "array",
+            "description": "Interventions used",
+            "items": {
+              "type": "string"
+            }
+          },
+          "strategiesUsed": {
+            "type": "array",
+            "description": "Strategies used",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reinforcementTypes": {
+            "type": "array",
+            "description": "Reinforcement types",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dataCollectionMethod": {
+            "type": "string",
+            "description": "Data collection method"
+          },
+          "discussionStatus": {
+            "type": "array",
+            "description": "Discussion status",
+            "items": {
+              "type": "string"
+            }
+          },
+          "additionalNotes": {
+            "type": "string",
+            "description": "Additional notes"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Created at"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Updated at"
+          },
+          "therapist": {
+            "$ref": "#/components/schemas/TherapistSummary"
+          },
+          "sessionActivities": {
+            "type": "array",
+            "description": "Session activities (ABC)",
+            "items": {
+              "$ref": "#/components/schemas/SessionActivityResponse"
+            }
+          }
+        }
+      },
+      "TherapistSummary": {
+        "type": "object",
+        "description": "Therapist summary",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "specialization": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ClientResourceAssignRequest": {
+        "type": "object",
+        "properties": {
+          "resourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sharedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "resourceId"
+        ]
+      },
+      "ResourceResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Resource id"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type",
+            "enum": [
+              "pdf",
+              "video",
+              "article",
+              "worksheet",
+              "link"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "description": "Category"
+          },
+          "fileUrl": {
+            "type": "string",
+            "description": "File URL"
+          },
+          "isGlobal": {
+            "type": "boolean",
+            "description": "Is global"
+          },
+          "uploadedByUser": {
+            "$ref": "#/components/schemas/UploadedByUser"
+          },
+          "sharedDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Shared date to client"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notes"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Created at"
+          }
+        }
+      },
+      "UploadedByUser": {
+        "type": "object",
+        "description": "Uploader summary",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          }
+        }
+      },
+      "ClientParentCreateRequest": {
+        "type": "object",
+        "properties": {
+          "parentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string",
+            "minLength": 1
+          },
+          "primary": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "relationship"
+        ]
+      },
+      "InitialGoalCreateRequest": {
+        "type": "object",
+        "description": "Request to create an initial goal",
+        "properties": {
+          "goalText": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "setBy": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "therapy": {
+            "type": "string",
+            "enum": [
+              "ABA",
+              "Speech",
+              "OT"
+            ]
+          }
+        },
+        "required": [
+          "goalText"
+        ]
+      },
+      "HomeworkCreateRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "instructions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "frequency": {
+            "type": "string"
+          },
+          "dataType": {
+            "type": "string",
+            "enum": [
+              "frequency",
+              "duration",
+              "intensity"
+            ]
+          },
+          "relatedGoalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "therapy": {
+            "type": "string",
+            "enum": [
+              "ABA",
+              "Speech",
+              "OT"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "worked",
+              "not_worked",
+              "yet_to_try",
+              "not_started"
+            ]
+          },
+          "assignedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "dataType",
+          "therapy",
+          "title"
+        ]
+      },
+      "AssignedByUser": {
+        "type": "object",
+        "description": "Assigned by user summary",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          }
+        }
+      },
+      "HomeworkResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Homework id"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Client id"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Purpose"
+          },
+          "therapy": {
+            "type": "string",
+            "description": "Therapy type",
+            "enum": [
+              "ABA",
+              "Speech",
+              "OT"
+            ]
+          },
+          "frequency": {
+            "type": "string",
+            "description": "Frequency",
+            "example": "Daily"
+          },
+          "dataType": {
+            "type": "string",
+            "description": "Data collection type",
+            "enum": [
+              "frequency",
+              "duration",
+              "intensity"
+            ]
+          },
+          "assignedDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Assigned date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Due date"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status",
+            "enum": [
+              "worked",
+              "not_worked",
+              "yet_to_try",
+              "not_started"
+            ]
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Is active"
+          },
+          "instructions": {
+            "type": "array",
+            "description": "Instructions",
+            "items": {
+              "type": "string"
+            }
+          },
+          "relatedGoalId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Related goal id"
+          },
+          "assignedByUser": {
+            "$ref": "#/components/schemas/AssignedByUser"
+          },
+          "homeworkCompletions": {
+            "type": "array",
+            "description": "Completion log entries",
+            "items": {
+              "$ref": "#/components/schemas/HomeworkCompletionResponse"
+            }
+          },
+          "relatedGoal": {
+            "$ref": "#/components/schemas/RelatedGoalResponse"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "RelatedGoalResponse": {
+        "type": "object",
+        "description": "Related goal summary",
+        "properties": {
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "GoalCreateRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string"
+          },
+          "therapy": {
+            "type": "string",
+            "enum": [
+              "ABA",
+              "Speech",
+              "OT"
+            ]
+          },
+          "category": {
+            "type": "string"
+          },
+          "targetCriteria": {
+            "type": "string"
+          },
+          "baselineValue": {
+            "type": "number"
+          },
+          "targetValue": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "achieved",
+              "discontinued",
+              "on_hold"
+            ]
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "targetDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "masteryCriteria": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "therapy",
+          "title"
+        ]
+      },
+      "GoalProgressPoint": {
+        "type": "object",
+        "description": "Goal progress point for chart",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "GoalResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Goal id",
+            "example": "d0000001-0001-0001-0001-000000000001"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Client id"
+          },
+          "title": {
+            "type": "string",
+            "description": "Goal title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Goal description"
+          },
+          "therapy": {
+            "type": "string",
+            "description": "Therapy type",
+            "enum": [
+              "ABA",
+              "Speech",
+              "OT"
+            ]
+          },
+          "targetCriteria": {
+            "type": "string",
+            "description": "Target criteria"
+          },
+          "baselineValue": {
+            "type": "string",
+            "description": "Baseline value"
+          },
+          "targetValue": {
+            "type": "string",
+            "description": "Target value"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status",
+            "enum": [
+              "active",
+              "achieved",
+              "discontinued",
+              "on_hold"
+            ]
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Start date"
+          },
+          "targetDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Target date"
+          },
+          "achievedDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Achieved date"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Created timestamp"
+          },
+          "goalProgress": {
+            "type": "array",
+            "description": "Progress entries",
+            "items": {
+              "$ref": "#/components/schemas/GoalProgressResponse"
+            }
+          },
+          "progressData": {
+            "type": "array",
+            "description": "Progress chart points",
+            "items": {
+              "$ref": "#/components/schemas/GoalProgressPoint"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "therapy",
+          "title"
+        ]
+      },
+      "CommunicationCreateRequest": {
+        "type": "object",
+        "description": "Request to create a communication style entry",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "vocal_speech",
+              "gestures",
+              "pictures",
+              "sign_language",
+              "body_language",
+              "aac"
+            ]
+          },
+          "proficiency": {
+            "type": "string",
+            "enum": [
+              "primary",
+              "emerging",
+              "not_used"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "method",
+          "proficiency"
+        ]
+      },
+      "TherapistUpdateRequest": {
+        "type": "object",
+        "description": "Request to update a therapist",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "description": "Full name",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "status": {
+            "type": "string",
+            "description": "Account status",
+            "enum": [
+              "active",
+              "inactive",
+              "suspended"
+            ]
+          },
+          "specialization": {
+            "type": "array",
+            "description": "Therapy specializations",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ABA",
+                "Speech",
+                "OT"
+              ]
+            }
+          },
+          "avatarUrl": {
+            "type": "string",
+            "description": "Avatar URL",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        }
+      },
+      "StrategyUpdateRequest": {
+        "type": "object",
+        "description": "Request to update a strategy",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Strategy title",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "description": "Strategy description",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "type": {
+            "type": "string",
+            "description": "Strategy type",
+            "enum": [
+              "antecedent",
+              "reinforcement",
+              "regulation"
+            ]
+          },
+          "whenToUse": {
+            "type": "string",
+            "description": "When to use this strategy",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "howToUse": {
+            "type": "string",
+            "description": "How to use this strategy",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "steps": {
+            "type": "array",
+            "description": "Implementation steps",
+            "items": {
+              "type": "string"
+            }
+          },
+          "examples": {
+            "type": "array",
+            "description": "Usage examples",
+            "items": {
+              "type": "string"
+            }
+          },
+          "targetZone": {
+            "type": "string",
+            "description": "Target zone for this strategy",
+            "enum": [
+              "green",
+              "yellow",
+              "orange",
+              "red",
+              "blue"
+            ]
+          },
+          "global": {
+            "type": "boolean",
+            "description": "Whether this is a global strategy"
+          }
+        }
+      },
+      "ResourceUpdateRequest": {
+        "type": "object",
+        "description": "Request to update a resource",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Resource title",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "description": "Resource description",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "type": {
+            "type": "string",
+            "description": "Resource type",
+            "enum": [
+              "pdf",
+              "video",
+              "article",
+              "worksheet",
+              "link"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "description": "Resource category",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "fileUrl": {
+            "type": "string",
+            "description": "File URL",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int32",
+            "description": "File size in bytes"
+          },
+          "global": {
+            "type": "boolean",
+            "description": "Whether this is a global resource"
+          }
+        }
+      },
+      "ParentAccessCodeUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 4
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "removeExpiresAt": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ClientUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date"
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "photoUrl": {
+            "type": "string"
+          },
+          "therapyStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "therapies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ABA",
+                "Speech",
+                "OT"
+              ]
+            },
+            "maxItems": 2147483647,
+            "minItems": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "suspended"
+            ]
+          },
+          "sensoryProfile": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "preferences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dislikes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "string"
+          },
+          "initialAssessment": {
+            "type": "string"
+          }
+        }
+      },
+      "SessionUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "sessionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sessionDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "therapy": {
+            "type": "string",
+            "enum": [
+              "ABA",
+              "Speech",
+              "OT"
+            ]
+          },
+          "longTermObjective": {
+            "type": "string"
+          },
+          "shortTermObjective": {
+            "type": "string"
+          },
+          "zone": {
+            "type": "string",
+            "enum": [
+              "green",
+              "yellow",
+              "orange",
+              "red",
+              "blue"
+            ]
+          },
+          "sessionTags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "successes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "struggles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "interventionsUsed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "strategiesUsed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reinforcementTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "discussionStatus": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "additionalNotes": {
+            "type": "string"
+          }
+        }
+      },
+      "HomeworkUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "instructions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "frequency": {
+            "type": "string"
+          },
+          "dataType": {
+            "type": "string",
+            "enum": [
+              "frequency",
+              "duration",
+              "intensity"
+            ]
+          },
+          "relatedGoalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "therapy": {
+            "type": "string",
+            "enum": [
+              "ABA",
+              "Speech",
+              "OT"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "worked",
+              "not_worked",
+              "yet_to_try",
+              "not_started"
+            ]
+          },
+          "assignedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GoalUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "therapy": {
+            "type": "string",
+            "enum": [
+              "ABA",
+              "Speech",
+              "OT"
+            ]
+          },
+          "targetCriteria": {
+            "type": "string"
+          },
+          "baselineValue": {
+            "type": "number"
+          },
+          "targetValue": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "achieved",
+              "discontinued",
+              "on_hold"
+            ]
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "targetDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "achievedDate": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "StrategiesByTypeResponse": {
+        "type": "object",
+        "description": "Strategies grouped by type",
+        "properties": {
+          "antecedent": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StrategyResponse"
+            }
+          },
+          "reinforcement": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StrategyResponse"
+            }
+          },
+          "regulation": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StrategyResponse"
+            }
+          }
+        }
+      },
+      "DashboardStatsResponse": {
+        "type": "object",
+        "properties": {
+          "activeGoalsCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of active goals"
+          },
+          "totalSessions": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Latest session number"
+          },
+          "nextSession": {
+            "$ref": "#/components/schemas/NextSession"
+          },
+          "activeHomeworkCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of active homework items"
+          },
+          "homeworkWorkedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of homework marked as worked"
+          },
+          "todayMood": {
+            "$ref": "#/components/schemas/TodayMood"
+          }
+        }
+      },
+      "NextSession": {
+        "type": "object",
+        "description": "Upcoming/last session summary",
+        "properties": {
+          "sessionDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "therapy": {
+            "type": "string"
+          }
+        }
+      },
+      "TodayMood": {
+        "type": "object",
+        "description": "Today's mood summary",
+        "properties": {
+          "mood": {
+            "type": "string"
+          },
+          "emoji": {
+            "type": "string"
+          },
+          "zone": {
+            "type": "string",
+            "enum": [
+              "green",
+              "yellow",
+              "orange",
+              "red",
+              "blue"
+            ]
+          },
+          "energyLevel": {
+            "type": "string"
+          }
+        }
+      },
+      "PageResponseTherapistResponse": {
+        "type": "object",
+        "description": "Paginated response wrapper",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "List of items",
+            "items": {
+              "$ref": "#/components/schemas/TherapistResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total number of items"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Current page number (0-indexed)"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Page size"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of pages"
+          }
+        }
+      },
+      "PageResponseStrategyLibraryResponse": {
+        "type": "object",
+        "description": "Paginated response wrapper",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "List of items",
+            "items": {
+              "$ref": "#/components/schemas/StrategyLibraryResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total number of items"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Current page number (0-indexed)"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Page size"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of pages"
+          }
+        }
+      },
+      "PageResponseResourceLibraryResponse": {
+        "type": "object",
+        "description": "Paginated response wrapper",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "List of items",
+            "items": {
+              "$ref": "#/components/schemas/ResourceLibraryResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total number of items"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Current page number (0-indexed)"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Page size"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of pages"
+          }
+        }
+      },
+      "PageResponseParentResponse": {
+        "type": "object",
+        "description": "Paginated response wrapper",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "List of items",
+            "items": {
+              "$ref": "#/components/schemas/ParentResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total number of items"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Current page number (0-indexed)"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Page size"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of pages"
+          }
+        }
+      },
+      "ParentResponse": {
+        "type": "object",
+        "description": "Parent details",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Parent ID"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Full name"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number"
+          },
+          "status": {
+            "type": "string",
+            "description": "Account status",
+            "enum": [
+              "active",
+              "inactive",
+              "suspended"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Account creation timestamp"
+          }
+        }
+      },
+      "ClientSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "suspended"
+            ]
+          },
+          "therapies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ABA",
+                "Speech",
+                "OT"
+              ]
+            }
+          },
+          "photoUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "PageResponseClientSummaryResponse": {
+        "type": "object",
+        "description": "Paginated response wrapper",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "List of items",
+            "items": {
+              "$ref": "#/components/schemas/ClientSummaryResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total number of items"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Current page number (0-indexed)"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Page size"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of pages"
+          }
+        }
+      },
+      "AuditLogResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "action": {
+            "type": "string"
+          },
+          "resourceType": {
+            "type": "string"
+          },
+          "resourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "performedBy": {
+            "type": "string"
+          },
+          "performedById": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "PageResponseAuditLogResponse": {
+        "type": "object",
+        "description": "Paginated response wrapper",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "List of items",
+            "items": {
+              "$ref": "#/components/schemas/AuditLogResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total number of items"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Current page number (0-indexed)"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Page size"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of pages"
+          }
+        }
+      }
+    }
+  }
+}

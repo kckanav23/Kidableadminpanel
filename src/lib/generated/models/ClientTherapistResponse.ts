@@ -2,6 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+/**
+ * Request to create a Client to Therapist link
+ */
 export type ClientTherapistResponse = {
     id?: string;
     therapistId?: string;

@@ -42,15 +42,16 @@ export type {
   
   // Strategy types
   StrategyResponse as Strategy,
-  StrategyLibraryResponse as StrategyLibrary,
   StrategyCreateRequest as CreateStrategyRequest,
   StrategyUpdateRequest as UpdateStrategyRequest,
+  StrategyAssigntoClientRequest as StrategyAssignToClientRequest,
   
   // Resource types
-  ResourceResponse as Resource,
+  ResourceLibraryResponse as Resource,
   ResourceLibraryResponse as ResourceLibrary,
   ResourceCreateRequest as CreateResourceRequest,
   ResourceUpdateRequest as UpdateResourceRequest,
+  ResourceAssignToClientRequest as ResourceAssignToClientRequest,
   
   // Therapist types
   TherapistResponse as Therapist,
@@ -70,7 +71,7 @@ export type {
   // Pagination types
   PageResponseClientSummaryResponse as ClientPageResponse,
   PageResponseTherapistResponse as TherapistPageResponse,
-  PageResponseStrategyLibraryResponse as StrategyPageResponse,
+  PageResponseStrategyResponse as StrategyPageResponse,
   PageResponseResourceLibraryResponse as ResourcePageResponse,
   PageResponseParentResponse as ParentPageResponse,
   PageResponseAuditLogResponse as AuditLogPageResponse,

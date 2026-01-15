@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { PageResponseResourceLibraryResponse } from '../models/PageResponseResourceLibraryResponse';
+import type { ResourceAssignToClientRequest } from '../models/ResourceAssignToClientRequest';
 import type { ResourceCreateRequest } from '../models/ResourceCreateRequest';
 import type { ResourceLibraryResponse } from '../models/ResourceLibraryResponse';
 import type { ResourceUpdateRequest } from '../models/ResourceUpdateRequest';
@@ -63,6 +64,28 @@ export class AdminResourceLibraryService {
         });
     }
     /**
+     * Assign resource to client (staff scoped)
+     * @returns ResourceLibraryResponse OK
+     * @throws ApiError
+     */
+    public assign2({
+        clientId,
+        requestBody,
+    }: {
+        clientId: string,
+        requestBody: ResourceAssignToClientRequest,
+    }): CancelablePromise<ResourceLibraryResponse> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/admin/clients/{clientId}/resources/assign',
+            path: {
+                'clientId': clientId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
      * Get resource details
      * @returns ResourceLibraryResponse OK
      * @throws ApiError
@@ -86,7 +109,7 @@ export class AdminResourceLibraryService {
      * @returns void
      * @throws ApiError
      */
-    public delete2({
+    public delete1({
         resourceId,
     }: {
         resourceId: string,
@@ -104,7 +127,7 @@ export class AdminResourceLibraryService {
      * @returns ResourceLibraryResponse OK
      * @throws ApiError
      */
-    public update3({
+    public update2({
         resourceId,
         requestBody,
     }: {
@@ -119,6 +142,50 @@ export class AdminResourceLibraryService {
             },
             body: requestBody,
             mediaType: 'application/json',
+        });
+    }
+    /**
+     * List resources for client (staff scoped)
+     * @returns ResourceLibraryResponse OK
+     * @throws ApiError
+     */
+    public getResources1({
+        clientId,
+        scope = 'all',
+    }: {
+        clientId: string,
+        scope?: string,
+    }): CancelablePromise<Array<ResourceLibraryResponse>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/admin/clients/{clientId}/resources',
+            path: {
+                'clientId': clientId,
+            },
+            query: {
+                'scope': scope,
+            },
+        });
+    }
+    /**
+     * Unassign resource from client (staff scoped)
+     * @returns any OK
+     * @throws ApiError
+     */
+    public unassign2({
+        clientId,
+        resourceId,
+    }: {
+        clientId: string,
+        resourceId: string,
+    }): CancelablePromise<any> {
+        return this.httpRequest.request({
+            method: 'DELETE',
+            url: '/admin/clients/{clientId}/resources/{resourceId}',
+            path: {
+                'clientId': clientId,
+                'resourceId': resourceId,
+            },
         });
     }
 }

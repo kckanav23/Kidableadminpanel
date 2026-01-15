@@ -63,7 +63,7 @@ export class AdminParentAccessCodesService {
      * @returns void
      * @throws ApiError
      */
-    public delete3({
+    public delete2({
         parentId,
         accessCodeId,
     }: {
@@ -84,7 +84,7 @@ export class AdminParentAccessCodesService {
      * @returns ParentAccessCodeResponse OK
      * @throws ApiError
      */
-    public update4({
+    public update3({
         parentId,
         accessCodeId,
         requestBody,

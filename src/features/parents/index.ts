@@ -1,0 +1,3 @@
+export { ParentsPage } from './ParentsPage';
+
+

@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { PageResponseSessionResponse } from '../models/PageResponseSessionResponse';
 import type { SessionCreateRequest } from '../models/SessionCreateRequest';
 import type { SessionResponse } from '../models/SessionResponse';
 import type { SessionUpdateRequest } from '../models/SessionUpdateRequest';
@@ -119,6 +120,34 @@ export class AdminSessionsService {
             },
             body: requestBody,
             mediaType: 'application/json',
+        });
+    }
+    /**
+     * List sessions (paginated)
+     * Admins can set all=true to list all sessions. Otherwise lists sessions for current therapist.
+     * @returns PageResponseSessionResponse OK
+     * @throws ApiError
+     */
+    public listSessions({
+        therapistId,
+        all = false,
+        page,
+        size = 20,
+    }: {
+        therapistId?: string,
+        all?: boolean,
+        page?: number,
+        size?: number,
+    }): CancelablePromise<PageResponseSessionResponse> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/admin/sessions',
+            query: {
+                'therapistId': therapistId,
+                'all': all,
+                'page': page,
+                'size': size,
+            },
         });
     }
 }

@@ -47,3 +47,13 @@ export const STRATEGY_TYPE_LABELS: Record<StrategyType, string> = {
   reinforcement: 'Reinforcement Strategies',
   regulation: 'Regulation Strategies',
 };
+
+export type SensoryProfileKey = 'visual' | 'auditory' | 'tactile' | 'vestibular' | 'proprioceptive';
+
+export const SENSORY_PROFILE_ICONS: Record<SensoryProfileKey, string> = {
+  visual: '👁️',
+  auditory: '👂',
+  tactile: '✋',
+  vestibular: '🔄',
+  proprioceptive: '💪',
+};
