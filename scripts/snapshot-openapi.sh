@@ -3,15 +3,15 @@
 set -euo pipefail
 
 # Usage:
-#   ./scripts/snapshot-openapi.sh --out openapi/openapi.json [--url http://localhost:40417/v3/api-docs]
+#   ./scripts/snapshot-openapi.sh [--url <openapi_url>] [--out <output_path>]
 #
 # Defaults:
-# - URL: http://localhost:40417/v3/api-docs
-# - OUT: openapi/openapi.json
+# - URL: https://backend.kidable.in/v3/api-docs
+# - OUT: Auto-generated as openapi/openapi.v{N}_{YYYY-MM-DD_HH-MM-IST}.json
 
-DEFAULT_URL="http://127.0.0.1:40417/v3/api-docs"
+DEFAULT_URL="https://backend.kidable.in/v3/api-docs"
 URL="$DEFAULT_URL"
-OUT="openapi/openapi.json"
+OUT=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -25,6 +25,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h|--help)
       echo "Usage: $0 [--url <openapi_url>] [--out <output_path>]"
+      echo ""
+      echo "If --out is not provided, auto-generates versioned filename with IST timestamp."
       exit 0
       ;;
     *)
@@ -33,6 +35,18 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+# Auto-generate output path if not provided
+if [ -z "$OUT" ]; then
+  # Find highest existing version number (supports both old vN.json and new vN_datetime.json formats)
+  LATEST_VERSION=$(ls openapi/openapi.v*.json 2>/dev/null | sed 's/.*openapi\.v\([0-9]*\).*/\1/' | sort -n | tail -1)
+  NEXT_VERSION=$((${LATEST_VERSION:-0} + 1))
+
+  # Generate IST timestamp
+  IST_DATETIME=$(TZ='Asia/Kolkata' date '+%Y-%m-%d_%H-%M-IST')
+
+  OUT="openapi/openapi.v${NEXT_VERSION}_${IST_DATETIME}.json"
+fi
 
 mkdir -p "$(dirname "$OUT")"
 

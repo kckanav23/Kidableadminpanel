@@ -1,0 +1,2 @@
+scp -r build kanav@34.131.62.75:kidable_dir/build_admin
+
